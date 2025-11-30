@@ -1,0 +1,15 @@
+streamlit
+tensorflow
+google-generativeai
+numpy
+Pillow
+geopy
+streamlit-lottie
+streamlit-folium
+folium
+flask
+flask-login
+flask-sqlalchemy
+werkzeug
+flask-cors
+python-dotenv

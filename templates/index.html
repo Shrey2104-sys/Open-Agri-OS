@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>🌿 Open-Agri</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-target="dashboard">
+                <span class="icon">🏠</span> Dashboard
+            </a>
+            <a href="#" class="nav-item" data-target="scout">
+                <span class="icon">🛰️</span> Agri-Scout
+            </a>
+            <a href="#" class="nav-item" data-target="doctor">
+                <span class="icon">🔬</span> Agri-Doctor
+            </a>
+            <a href="#" class="nav-item" data-target="weather">
+                <span class="icon">🌦️</span> Weather
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <p>👤 {{ user.username }}</p>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- MODULE: DASHBOARD -->
+        <section id="dashboard" class="module-section active">
+            <header class="module-header">
+                <h1>Farm Overview</h1>
+                <p>Welcome back, {{ user.username }}</p>
+            </header>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Farms Monitored</h3>
+                    <div class="value">124</div>
+                    <div class="trend positive">+2 this week</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Diseases Prevented</h3>
+                    <div class="value">89%</div>
+                    <div class="trend positive">+5% efficiency</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Market Trend</h3>
+                    <div class="value">Bullish</div>
+                    <div class="trend neutral">Wheat Stable</div>
+                </div>
+            </div>
+
+            <div class="chart-container glass-card">
+                <h3>📈 Market Trends</h3>
+                <canvas id="marketChart"></canvas>
+            </div>
+
+            <div class="alerts-container">
+                <h3>📢 System Alerts</h3>
+                <div class="alert-card warning">
+                    <span class="icon">⚠️</span>
+                    <div class="content">
+                        <h4>Pest Alert</h4>
+                        <p>Fall Armyworm detected in Davanagere region.</p>
+                    </div>
+                </div>
+                <div class="alert-card success">
+                    <span class="icon">✅</span>
+                    <div class="content">
+                        <h4>Irrigation Complete</h4>
+                        <p>Sector 4 watering schedule finished successfully.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MODULE: SCOUT -->
+        <section id="scout" class="module-section">
+            <header class="module-header">
+                <h1>Agri-Scout</h1>
+                <p>Land Intelligence & Crop Suitability</p>
+            </header>
+
+            <div class="scout-layout">
+                <div class="scout-controls glass-card">
+                    <h3>📍 Location Search</h3>
+                    <div class="input-group">
+                        <input type="text" id="place-input" placeholder="Enter Region (e.g. Davanagere)">
+                        <button id="scout-btn" class="btn-primary">Analyze</button>
+                    </div>
+
+                    <div id="scout-results" class="hidden">
+                        <hr>
+                        <h3>🌱 Crop Advice</h3>
+                        <div id="crop-advice-content"></div>
+                    </div>
+                </div>
+
+                <div class="map-container glass-card">
+                    <div id="map"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MODULE: DOCTOR -->
+        <section id="doctor" class="module-section">
+            <header class="module-header">
+                <h1>Agri-Doctor</h1>
+                <p>AI Plant Pathology Lab</p>
+            </header>
+
+            <div class="doctor-layout">
+                <div class="upload-zone glass-card" id="drop-zone">
+                    <div class="upload-content">
+                        <span class="icon-large">📸</span>
+                        <h3>Upload Specimen</h3>
+                        <p>Drag & drop or click to upload leaf image</p>
+                        <input type="file" id="file-input" accept="image/*" hidden>
+                    </div>
+                </div>
+
+                <div id="diagnosis-result" class="diagnosis-card glass-card hidden">
+                    <h3>📋 Diagnosis Report</h3>
+                    <div class="confidence-meter">
+                        <div class="label">Confidence</div>
+                        <div class="bar-bg">
+                            <div class="bar-fill" id="confidence-bar"></div>
+                        </div>
+                        <div class="value" id="confidence-text">0%</div>
+                    </div>
+
+                    <div id="disease-status" class="status-box"></div>
+
+                    <button id="treatment-btn" class="btn-primary hidden">💊 Generate AI Treatment Plan</button>
+
+                    <div id="treatment-plan" class="treatment-box hidden">
+                        <h4>📝 Prescription</h4>
+                        <div id="treatment-content"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+</div>
+
+<div class="alerts-container">
+    <h3>📢 System Alerts</h3>
+    <div class="alert-card warning">
+        <span class="icon">⚠️</span>
+        <div class="content">
+            <h4>Pest Alert</h4>
+            <p>Fall Armyworm detected in Davanagere region.</p>
+        </div>
+    </div>
+    <div class="alert-card success">
+        <span class="icon">✅</span>
+        <div class="content">
+            <h4>Irrigation Complete</h4>
+            <p>Sector 4 watering schedule finished successfully.</p>
+        </div>
+    </div>
+</div>
+</section>
+
+<!-- MODULE: SCOUT -->
+<section id="scout" class="module-section">
+    <header class="module-header">
+        <h1>Agri-Scout</h1>
+        <p>Land Intelligence & Crop Suitability</p>
+    </header>
+
+    <div class="scout-layout">
+        <div class="scout-controls glass-card">
+            <h3>📍 Location Search</h3>
+            <div class="input-group">
+                <input type="text" id="place-input" placeholder="Enter Region (e.g. Davanagere)">
+                <button id="scout-btn" class="btn-primary">Analyze</button>
+            </div>
+
+            <div id="scout-results" class="hidden">
+                <hr>
+                <h3>🌱 Crop Advice</h3>
+                <div id="crop-advice-content"></div>
+            </div>
+        </div>
+
+        <div class="map-container glass-card">
+            <div id="map"></div>
+        </div>
+    </div>
+</section>
+
+<!-- MODULE: DOCTOR -->
+<section id="doctor" class="module-section">
+    <header class="module-header">
+        <h1>Agri-Doctor</h1>
+        <p>AI Plant Pathology Lab</p>
+    </header>
+
+    <div class="doctor-layout">
+        <div class="upload-zone glass-card" id="drop-zone">
+            <div class="upload-content">
+                <span class="icon-large">📸</span>
+                <h3>Upload Specimen</h3>
+                <p>Drag & drop or click to upload leaf image</p>
+                <input type="file" id="file-input" accept="image/*" hidden>
+            </div>
+        </div>
+
+        <div id="diagnosis-result" class="diagnosis-card glass-card hidden">
+            <h3>📋 Diagnosis Report</h3>
+            <div class="confidence-meter">
+                <div class="label">Confidence</div>
+                <div class="bar-bg">
+                    <div class="bar-fill" id="confidence-bar"></div>
+                </div>
+                <div class="value" id="confidence-text">0%</div>
+            </div>
+
+            <div id="disease-status" class="status-box"></div>
+
+            <button id="treatment-btn" class="btn-primary hidden">💊 Generate AI Treatment Plan</button>
+
+            <div id="treatment-plan" class="treatment-box hidden">
+                <h4>📝 Prescription</h4>
+                <div id="treatment-content"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- MODULE: WEATHER -->
+<section id="weather" class="module-section">
+    <header class="module-header">
+        <h1>Weather Station</h1>
+        <p>Detailed Analytics Coming Soon</p>
+    </header>
+    <div class="weather-dashboard">
+        <div class="weather-main glass-card">
+            <div class="weather-icon">⛅</div>
+            <div class="weather-info">
+                <h2 id="w-temp">28°C</h2>
+                <p id="w-condition">Partly Cloudy</p>
+            </div>
+        </div>
+        <div class="weather-details glass-card">
+            <div class="detail-item">
+                <span>💧 Humidity</span>
+                <span id="w-humidity">65%</span>
+            </div>
+            <div class="detail-item">
+                <span>💨 Wind</span>
+                <span id="w-wind">12 km/h</span>
+            </div>
+            <div class="detail-item">
+                <span>🌱 Forecast</span>
+                <span id="w-forecast" style="color: var(--accent-color);">Good for spraying</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+</main>
+</div>
+<div id="toast-container"></div>
+{% endblock %}
