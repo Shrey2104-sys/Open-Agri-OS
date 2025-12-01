@@ -118,25 +118,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Agri-Scout (Map) ---
     let map;
+    let scoutLayerGroup; // Group to hold markers and heatmaps
+
     if (document.getElementById('map')) {
         // Davanagere Coordinates
         const davanagere = [14.4644, 75.9218];
 
         map = L.map('map', {
             center: davanagere,
-            zoom: 13,
-            minZoom: 12,
-            maxZoom: 16,
-            maxBounds: [
-                [14.3, 75.7], // SouthWest
-                [14.6, 76.1]  // NorthEast
-            ]
+            zoom: 13
         });
 
         // Esri World Imagery (Satellite)
         L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Tiles &copy; Esri, Maxar, Earthstar Geographics'
         }).addTo(map);
+
+        // Initialize LayerGroup
+        scoutLayerGroup = L.layerGroup().addTo(map);
     }
 
     const scoutBtn = document.getElementById('scout-btn');
@@ -160,37 +159,39 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (data.error) {
                         showToast(data.error, "error");
                     } else {
-                        // Update Map
+                        // Update Map View
                         const [lat, lon] = data.coords;
                         map.setView([lat, lon], 13);
 
-                        // Clear existing layers (except base)
-                        map.eachLayer((layer) => {
-                            if (!layer._url) { // Keep tile layer
-                                map.removeLayer(layer);
-                            }
-                        });
+                        // Clear previous results safely
+                        scoutLayerGroup.clearLayers();
 
-                        L.marker([lat, lon]).addTo(map)
+                        // Add Marker
+                        const marker = L.marker([lat, lon])
                             .bindPopup(`<b>${placeName}</b><br>NDVI Analysis Complete<br>Season: ${data.recommendation.season}`)
-                            .openPopup();
+                            .addTo(scoutLayerGroup);
 
-                        // Generate Simulated NDVI Heatmap Data
-                        const heatData = [];
-                        for (let i = 0; i < 500; i++) {
-                            const latOffset = (Math.random() - 0.5) * 0.04;
-                            const lonOffset = (Math.random() - 0.5) * 0.04;
-                            let intensity = Math.random();
-                            if (Math.random() > 0.8) intensity = 0.2;
-                            heatData.push([lat + latOffset, lon + lonOffset, intensity]);
+                        setTimeout(() => marker.openPopup(), 500);
+
+                        // Check for Davanagere (Real Image Overlay)
+                        if (placeName.toLowerCase().includes('davanagere') || placeName.toLowerCase().includes('davangere')) {
+                            const imageUrl = '/static/ndvi_demo.jpg';
+                            const imageBounds = [[lat - 0.02, lon - 0.02], [lat + 0.02, lon + 0.02]];
+                            L.imageOverlay(imageUrl, imageBounds).addTo(scoutLayerGroup);
+                        } else {
+                            // Generate Static NDVI Heatmap Data for others
+                            const heatData = getStaticNDVIData(placeName, lat, lon);
+
+                            // Add Heatmap to Group
+                            L.heatLayer(heatData, {
+                                radius: 30,
+                                blur: 20,
+                                maxZoom: 17,
+                                gradient: { 0.2: 'red', 0.4: 'yellow', 0.6: 'lime', 1.0: 'green' }
+                            }).addTo(scoutLayerGroup);
                         }
 
-                        L.heatLayer(heatData, {
-                            radius: 25, blur: 15, maxZoom: 17,
-                            gradient: { 0.2: 'red', 0.4: 'yellow', 0.6: 'lime', 1.0: 'green' }
-                        }).addTo(map);
-
-                        // Show Results
+                        // Show Results Panel
                         document.getElementById('scout-results').classList.remove('hidden');
                         document.getElementById('crop-advice-content').innerHTML = `
                             <div style="margin-bottom: 15px; padding: 10px; background: rgba(0,0,0,0.05); border-radius: 8px;">
@@ -324,6 +325,63 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast("Error fetching treatment", "error");
             }
         });
+    }
+
+    // Helper: Generate Static NDVI Patterns
+    function getStaticNDVIData(placeName, lat, lon) {
+        const data = [];
+        const name = placeName.toLowerCase();
+
+        if (name.includes('davanagere') || name.includes('davangere')) {
+            // Pattern: Dense, Healthy Fields (Rectangular Blocks)
+            for (let i = 0; i < 600; i++) {
+                // Block 1: Main Irrigated Area (Green)
+                let latOffset = (Math.random() - 0.5) * 0.03;
+                let lonOffset = (Math.random() - 0.5) * 0.03;
+                data.push([lat + latOffset, lon + lonOffset, 0.9 + Math.random() * 0.1]);
+
+                // Block 2: Outskirts (Mixed)
+                if (i % 2 === 0) {
+                    latOffset = (Math.random() - 0.5) * 0.06;
+                    lonOffset = (Math.random() - 0.5) * 0.06;
+                    data.push([lat + latOffset, lon + lonOffset, 0.5 + Math.random() * 0.3]);
+                }
+            }
+        } else if (name.includes('mangalore') || name.includes('mangaluru')) {
+            // Pattern: Coastal Strip (Linear)
+            for (let i = 0; i < 500; i++) {
+                // Linear strip along the coast (North-South roughly)
+                let latOffset = (Math.random() - 0.5) * 0.08;
+                let lonOffset = (Math.random() - 0.5) * 0.01 - 0.02; // Shifted slightly West
+                data.push([lat + latOffset, lon + lonOffset, 0.7 + Math.random() * 0.3]);
+            }
+        } else if (name.includes('coorg') || name.includes('madikeri') || name.includes('kodagu')) {
+            // Pattern: Scattered Hill Patches
+            for (let i = 0; i < 500; i++) {
+                // Create 3 distinct clusters
+                const cluster = i % 3;
+                let latOff, lonOff;
+
+                if (cluster === 0) { latOff = 0.02; lonOff = 0.02; }
+                else if (cluster === 1) { latOff = -0.02; lonOff = -0.01; }
+                else { latOff = 0.01; lonOff = -0.03; }
+
+                let rLat = (Math.random() - 0.5) * 0.015;
+                let rLon = (Math.random() - 0.5) * 0.015;
+
+                data.push([lat + latOff + rLat, lon + lonOff + rLon, 0.6 + Math.random() * 0.4]);
+            }
+        } else {
+            // Fallback: Random Cloud for other locations
+            for (let i = 0; i < 300; i++) {
+                const latOffset = (Math.random() - 0.5) * 0.04;
+                const lonOffset = (Math.random() - 0.5) * 0.04;
+                let intensity = Math.random();
+                if (Math.random() > 0.8) intensity = 0.2;
+                data.push([lat + latOffset, lon + lonOffset, intensity]);
+            }
+        }
+        return data;
     }
 
 });

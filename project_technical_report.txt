@@ -45,13 +45,27 @@ Open-Agri OS is a comprehensive, AI-powered farm management dashboard designed t
     3.  AI analyzes the image for pathogens/deficiencies.
     4.  **Output:** Returns a diagnosis (Healthy/Disease Name), confidence score, and a detailed treatment plan (chemical/organic controls).
 
-## 4. Recent Technical Upgrades
-*   **UI Overhaul:** Transitioned to a premium "Midnight Gourmet/Bolt" aesthetic with refined typography (Outfit/Inter fonts) and polished interactive elements.
-*   **Sidebar Navigation:** Implemented a collapsible, hover-expandable sidebar with smart text hiding/showing logic for a clean UX.
-*   **Robust Error Handling:** Fixed template inheritance issues (`TemplateSyntaxError`) and ensured graceful degradation for missing data.
-*   **Satellite Integration:** Upgraded standard maps to satellite imagery to provide farmers with realistic context.
+## 4. Recent Technical Upgrades & Configurations
+*   **MobileNetV2 Integration:**
+    *   Implemented `scripts/train_model.py` to fine-tune a MobileNetV2 model on custom datasets.
+    *   Generated `model.h5` for offline disease prediction capabilities.
+    *   Integrated model loading into the backend for faster inference.
+*   **Mobile Access & Deployment:**
+    *   Configured Flask server to listen on `0.0.0.0` to allow local network access.
+    *   Optimized firewall rules to permit inbound traffic on port 5000.
+    *   Enabled cross-device testing (Laptop <-> Mobile) via local IP (`192.168.60.96`).
+*   **UI/UX Refinements:**
+    *   **"Bolt" Design System:** Premium dark green aesthetic with glassmorphism cards.
+    *   **Streamlined AI Interaction:** Removed blocking overlays for instant feedback.
+    *   **Responsive Maps:** Constrained satellite view to Davanagere region for focused analysis.
 
-## 5. Future Roadmap
+## 5. Current System Status
+*   **Server:** Running on `http://0.0.0.0:5000` (Local IP: `192.168.60.96`).
+*   **Database:** Initialized and active.
+*   **Model:** `model.h5` loaded and ready for inference.
+*   **Network:** Accessible to all devices on the local Wi-Fi network.
+
+## 6. Future Roadmap
 *   **IoT Integration:** Connect real soil sensors (Arduino/ESP32) to the dashboard.
 *   **Marketplace:** P2P buying/selling platform for farmers.
 *   **Offline Mode:** PWA (Progressive Web App) capabilities for low-connectivity areas.

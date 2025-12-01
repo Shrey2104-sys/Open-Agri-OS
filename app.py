@@ -132,20 +132,16 @@ def scout_info():
         if location:
             coords = (location.latitude, location.longitude)
             
-            # Mock Recommendation
-            rec = {
-                "season": "Rabi",
-                "soil": "Alluvial",
-                "crops": ["Wheat", "Mustard"]
-            }
-            
-            # Mock Weather
+            # Mock Weather (Simulated for now, could be API later)
             weather = {
                 "temp": 28,
                 "condition": "Sunny",
                 "humidity": 60,
                 "forecast": "Good day."
             }
+            
+            # Dynamic AI Recommendation
+            rec = data_engine.get_crop_recommendation(place_name, weather)
             
             # Map
             map_data = data_engine.get_satellite_map(place_name)
@@ -165,4 +161,4 @@ def scout_info():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, host='0.0.0.0')

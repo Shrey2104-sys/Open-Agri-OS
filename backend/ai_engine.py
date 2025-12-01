@@ -53,17 +53,15 @@ def predict_disease(image_file):
         # Predict
         predictions = model.predict(img_array)
         
-        # Interpret Results
+        # Interpretation
         if os.path.exists(MODEL_PATH):
-            # Custom Model Logic (Assuming softmax output)
-            # You would need a mapping of index to class names here
-            # For now, we'll simulate it or return the index
+            # Custom Model Logic
             class_index = np.argmax(predictions[0])
             confidence = float(np.max(predictions[0]))
             
-            # Placeholder class names - in a real app, load these from a file
-            class_names = ['Healthy', 'Early Blight', 'Late Blight'] 
-            predicted_class = class_names[class_index] if class_index < len(class_names) else f"Class {class_index}"
+            # Class names must match training data
+            class_names = ['Early Blight', 'Late Blight', 'Healthy'] 
+            predicted_class = class_names[class_index] if class_index < len(class_names) else f"Unknown ({class_index})"
             
         else:
             # MobileNetV2 (ImageNet) Logic
@@ -71,15 +69,25 @@ def predict_disease(image_file):
             predicted_class = decoded[1] # Class name
             confidence = float(decoded[2]) # Confidence
 
+        # Simple recommendation logic
+        recommendations = {
+            "Healthy": "Crop is healthy. Continue standard monitoring.",
+            "Early Blight": "Apply copper-based fungicides. Improve air circulation.",
+            "Late Blight": "Remove infected parts immediately. Apply systemic fungicides.",
+            "Unknown": "Consult an expert for manual verification."
+        }
+        recommendation = recommendations.get(predicted_class, "Consult an expert.")
+
         return {
-            'class': predicted_class,
-            'confidence': confidence
+            'detected_disease': predicted_class,
+            'confidence': confidence,
+            'recommendation': recommendation
         }
 
     except Exception as e:
         print(f"Prediction Error: {e}")
         return {
-            'class': 'Error',
+            'detected_disease': 'Error',
             'confidence': 0.0,
-            'details': str(e)
+            'recommendation': str(e)
         }
