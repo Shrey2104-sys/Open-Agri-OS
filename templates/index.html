@@ -9,16 +9,16 @@
         </div>
         <nav class="sidebar-nav">
             <a href="#" class="nav-item active" data-target="dashboard">
-                <span class="icon">🏠</span> Dashboard
+                <span class="icon">🏠</span> <span class="link-text">Dashboard</span>
             </a>
             <a href="#" class="nav-item" data-target="scout">
-                <span class="icon">🛰️</span> Agri-Scout
+                <span class="icon">🛰️</span> <span class="link-text">Agri-Scout</span>
             </a>
             <a href="#" class="nav-item" data-target="doctor">
-                <span class="icon">🔬</span> Agri-Doctor
+                <span class="icon">🔬</span> <span class="link-text">Agri-Doctor</span>
             </a>
             <a href="#" class="nav-item" data-target="weather">
-                <span class="icon">🌦️</span> Weather
+                <span class="icon">🌦️</span> <span class="link-text">Weather</span>
             </a>
         </nav>
         <div class="sidebar-footer">
@@ -31,6 +31,17 @@
 
     <!-- Main Content -->
     <main class="main-content">
+        <!-- Market Ticker -->
+        <div class="ticker-wrap">
+            <div class="ticker">
+                <div class="ticker-item">🌾 Wheat: ₹2125 (+1.2%)</div>
+                <div class="ticker-item">🌽 Maize: ₹1850 (-0.5%)</div>
+                <div class="ticker-item">🍚 Rice: ₹2900 (+0.8%)</div>
+                <div class="ticker-item">🥔 Potato: ₹1200 (+2.1%)</div>
+                <div class="ticker-item">🍅 Tomato: ₹3500 (-1.5%)</div>
+                <div class="ticker-item">🧅 Onion: ₹2400 (+0.5%)</div>
+            </div>
+        </div>
 
         <!-- MODULE: DASHBOARD -->
         <section id="dashboard" class="module-section active">
@@ -57,28 +68,74 @@
                 </div>
             </div>
 
-            <div class="chart-container glass-card">
-                <h3>📈 Market Trends</h3>
-                <canvas id="marketChart"></canvas>
-            </div>
+            <div class="charts-grid">
+                <div class="dashboard-grid">
+                    <!-- Left Column: Charts -->
+                    <div class="chart-section">
+                        <div class="chart-card">
+                            <h3>Yield History</h3>
+                            <canvas id="yieldChart"></canvas>
+                        </div>
+                        <div class="chart-card">
+                            <h3>Market Trends</h3>
+                            <canvas id="marketChart"></canvas>
+                        </div>
+                    </div>
 
-            <div class="alerts-container">
-                <h3>📢 System Alerts</h3>
-                <div class="alert-card warning">
-                    <span class="icon">⚠️</span>
-                    <div class="content">
-                        <h4>Pest Alert</h4>
-                        <p>Fall Armyworm detected in Davanagere region.</p>
+                    <!-- Right Column: Weather & Insights -->
+                    <div class="side-panel">
+                        <!-- Blue Weather Card -->
+                        <div class="weather-card">
+                            <div class="weather-header">
+                                <div class="weather-location">
+                                    <h2>Davanagere,</h2>
+                                    <h2>Karnataka</h2>
+                                </div>
+                                <div class="weather-icon-small">☁️</div>
+                            </div>
+                            <div class="weather-temp">29°C</div>
+                            <div class="weather-details-grid">
+                                <div class="weather-detail-box">
+                                    <span>Humidity</span>
+                                    <strong>79%</strong>
+                                </div>
+                                <div class="weather-detail-box">
+                                    <span>Wind</span>
+                                    <strong>11 km/h</strong>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="alert-card success">
-                    <span class="icon">✅</span>
-                    <div class="content">
-                        <h4>Irrigation Complete</h4>
-                        <p>Sector 4 watering schedule finished successfully.</p>
+
+                <!-- Yellow Insight Card -->
+                <div class="insight-card">
+                    <div class="insight-icon">💡</div>
+                    <div class="insight-content">
+                        <h3>Today's Insight</h3>
+                        <p>Optimal planting conditions detected for the next 48 hours. Soil moisture
+                            levels are ideal, and weather forecasts show stable conditions. Consider
+                            starting your wheat sowing operations.</p>
                     </div>
                 </div>
-            </div>
+
+                <div class="alerts-container">
+                    <h3>📢 System Alerts</h3>
+                    <div class="alert-card warning">
+                        <span class="icon">⚠️</span>
+                        <div class="content">
+                            <h4>Pest Alert</h4>
+                            <p>Fall Armyworm detected in Davanagere region.</p>
+                        </div>
+                    </div>
+                    <div class="alert-card success">
+                        <span class="icon">✅</span>
+                        <div class="content">
+                            <h4>Irrigation Complete</h4>
+                            <p>Sector 4 watering schedule finished successfully.</p>
+                        </div>
+                    </div>
+                </div>
         </section>
 
         <!-- MODULE: SCOUT -->
@@ -138,136 +195,451 @@
 
                     <div id="disease-status" class="status-box"></div>
 
-                    <button id="treatment-btn" class="btn-primary hidden">💊 Generate AI Treatment Plan</button>
+                    <button id="treatment-btn" class="btn-primary hidden">💊 Generate AI Treatment
+                        Plan</button>
+                </div>
+            </div>
 
-                    <div id="treatment-plan" class="treatment-box hidden">
-                        <h4>📝 Prescription</h4>
-                        <div id="treatment-content"></div>
+            <!-- Treatment Modal -->
+            <div id="treatment-modal" class="modal hidden">
+                <div class="modal-content glass-card">
+                    <span class="close-modal">&times;</span>
+                    <h2>🩺 AI Agronomist Prescription</h2>
+                    <div id="treatment-plan-content"></div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary"
+                            onclick="document.getElementById('treatment-modal').classList.add('hidden')">Close</button>
+                        <button class="btn-primary" onclick="window.print()">🖨️ Print
+                            Prescription</button>
                     </div>
                 </div>
             </div>
         </section>
 
-</div>
-
-<div class="alerts-container">
-    <h3>📢 System Alerts</h3>
-    <div class="alert-card warning">
-        <span class="icon">⚠️</span>
-        <div class="content">
-            <h4>Pest Alert</h4>
-            <p>Fall Armyworm detected in Davanagere region.</p>
-        </div>
-    </div>
-    <div class="alert-card success">
-        <span class="icon">✅</span>
-        <div class="content">
-            <h4>Irrigation Complete</h4>
-            <p>Sector 4 watering schedule finished successfully.</p>
-        </div>
-    </div>
-</div>
-</section>
-
-<!-- MODULE: SCOUT -->
-<section id="scout" class="module-section">
-    <header class="module-header">
-        <h1>Agri-Scout</h1>
-        <p>Land Intelligence & Crop Suitability</p>
-    </header>
-
-    <div class="scout-layout">
-        <div class="scout-controls glass-card">
-            <h3>📍 Location Search</h3>
-            <div class="input-group">
-                <input type="text" id="place-input" placeholder="Enter Region (e.g. Davanagere)">
-                <button id="scout-btn" class="btn-primary">Analyze</button>
-            </div>
-
-            <div id="scout-results" class="hidden">
-                <hr>
-                <h3>🌱 Crop Advice</h3>
-                <div id="crop-advice-content"></div>
-            </div>
-        </div>
-
-        <div class="map-container glass-card">
-            <div id="map"></div>
-        </div>
-    </div>
-</section>
-
-<!-- MODULE: DOCTOR -->
-<section id="doctor" class="module-section">
-    <header class="module-header">
-        <h1>Agri-Doctor</h1>
-        <p>AI Plant Pathology Lab</p>
-    </header>
-
-    <div class="doctor-layout">
-        <div class="upload-zone glass-card" id="drop-zone">
-            <div class="upload-content">
-                <span class="icon-large">📸</span>
-                <h3>Upload Specimen</h3>
-                <p>Drag & drop or click to upload leaf image</p>
-                <input type="file" id="file-input" accept="image/*" hidden>
-            </div>
-        </div>
-
-        <div id="diagnosis-result" class="diagnosis-card glass-card hidden">
-            <h3>📋 Diagnosis Report</h3>
-            <div class="confidence-meter">
-                <div class="label">Confidence</div>
-                <div class="bar-bg">
-                    <div class="bar-fill" id="confidence-bar"></div>
+        <!-- MODULE: WEATHER -->
+        <section id="weather" class="module-section">
+            <header class="module-header">
+                <h1>Weather Station</h1>
+                <p>Detailed Analytics Coming Soon</p>
+            </header>
+            <div class="weather-dashboard">
+                <div class="weather-main glass-card">
+                    <div class="weather-icon">⛅</div>
+                    <div class="weather-info">
+                        <h2 id="w-temp">28°C</h2>
+                        <p id="w-condition">Partly Cloudy</p>
+                    </div>
                 </div>
-                <div class="value" id="confidence-text">0%</div>
+                <div class="weather-details glass-card">
+                    <div class="detail-item">
+                        <span>💧 Humidity</span>
+                        <span id="w-humidity">65%</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>💨 Wind</span>
+                        <span id="w-wind">12 km/h</span>
+                    </div>
+                    <div class="detail-item">
+                        <span>🌱 Forecast</span>
+                        <span id="w-forecast" style="color: var(--accent-color);">Good for
+                            spraying</span>
+                    </div>
+                </div>
             </div>
+        </section>
+        <h3>Farms Monitored</h3>
+        <div class="value">124</div>
+        <div class="trend positive">+2 this week</div>
+</div>
+<div class="stat-card">
+    <h3>Diseases Prevented</h3>
+    <div class="value">89%</div>
+    <div class="trend positive">+5% efficiency</div>
+</div>
+<div class="stat-card">
+    <h3>Market Trend</h3>
+    <div class="value">Bullish</div>
+    <div class="trend neutral">Wheat Stable</div>
+</div>
+</div>
 
-            <div id="disease-status" class="status-box"></div>
+<div class="charts-grid">
+    <div class="dashboard-grid">
+        <!-- Left Column: Charts -->
+        <div class="chart-section">
+            <div class="chart-card">
+                <h3>Yield History</h3>
+                <canvas id="yieldChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Market Trends</h3>
+                <canvas id="marketChart"></canvas>
+            </div>
+        </div>
 
-            <button id="treatment-btn" class="btn-primary hidden">💊 Generate AI Treatment Plan</button>
-
-            <div id="treatment-plan" class="treatment-box hidden">
-                <h4>📝 Prescription</h4>
-                <div id="treatment-content"></div>
+        <!-- Right Column: Weather & Insights -->
+        <div class="side-panel">
+            <!-- Blue Weather Card -->
+            <div class="weather-card">
+                <div class="weather-header">
+                    <div class="weather-location">
+                        <h2>Davanagere,</h2>
+                        <h2>Karnataka</h2>
+                    </div>
+                    <div class="weather-icon-small">☁️</div>
+                </div>
+                <div class="weather-temp">29°C</div>
+                <div class="weather-details-grid">
+                    <div class="weather-detail-box">
+                        <span>Humidity</span>
+                        <strong>79%</strong>
+                    </div>
+                    <div class="weather-detail-box">
+                        <span>Wind</span>
+                        <strong>11 km/h</strong>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</section>
 
-<!-- MODULE: WEATHER -->
-<section id="weather" class="module-section">
-    <header class="module-header">
-        <h1>Weather Station</h1>
-        <p>Detailed Analytics Coming Soon</p>
-    </header>
-    <div class="weather-dashboard">
-        <div class="weather-main glass-card">
-            <div class="weather-icon">⛅</div>
-            <div class="weather-info">
-                <h2 id="w-temp">28°C</h2>
-                <p id="w-condition">Partly Cloudy</p>
+    <!-- Yellow Insight Card -->
+    <div class="insight-card">
+        <div class="insight-icon">💡</div>
+        <div class="insight-content">
+            <h3>Today's Insight</h3>
+            <p>Optimal planting conditions detected for the next 48 hours. Soil moisture
+                levels are ideal, and weather forecasts show stable conditions. Consider
+                starting your wheat sowing operations.</p>
+        </div>
+    </div>
+
+    <div class="alerts-container">
+        <h3>📢 System Alerts</h3>
+        <div class="alert-card warning">
+            <span class="icon">⚠️</span>
+            <div class="content">
+                <h4>Pest Alert</h4>
+                <p>Fall Armyworm detected in Davanagere region.</p>
             </div>
         </div>
-        <div class="weather-details glass-card">
-            <div class="detail-item">
-                <span>💧 Humidity</span>
-                <span id="w-humidity">65%</span>
-            </div>
-            <div class="detail-item">
-                <span>💨 Wind</span>
-                <span id="w-wind">12 km/h</span>
-            </div>
-            <div class="detail-item">
-                <span>🌱 Forecast</span>
-                <span id="w-forecast" style="color: var(--accent-color);">Good for spraying</span>
+        <div class="alert-card success">
+            <span class="icon">✅</span>
+            <div class="content">
+                <h4>Irrigation Complete</h4>
+                <p>Sector 4 watering schedule finished successfully.</p>
             </div>
         </div>
     </div>
-</section>
+    </section>
 
-</main>
+    <!-- MODULE: SCOUT -->
+    <section id="scout" class="module-section">
+        <header class="module-header">
+            <h1>Agri-Scout</h1>
+            <p>Land Intelligence & Crop Suitability</p>
+        </header>
+
+        <div class="scout-layout">
+            <div class="scout-controls glass-card">
+                <h3>📍 Location Search</h3>
+                <div class="input-group">
+                    <input type="text" id="place-input" placeholder="Enter Region (e.g. Davanagere)">
+                    <button id="scout-btn" class="btn-primary">Analyze</button>
+                </div>
+
+                <div id="scout-results" class="hidden">
+                    <hr>
+                    <h3>🌱 Crop Advice</h3>
+                    <div id="crop-advice-content"></div>
+                </div>
+            </div>
+
+            <div class="map-container glass-card">
+                <div id="map"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODULE: DOCTOR -->
+    <section id="doctor" class="module-section">
+        <header class="module-header">
+            <h1>Agri-Doctor</h1>
+            <p>AI Plant Pathology Lab</p>
+        </header>
+
+        <div class="doctor-layout">
+            <div class="upload-zone glass-card" id="drop-zone">
+                <div class="upload-content">
+                    <span class="icon-large">📸</span>
+                    <h3>Upload Specimen</h3>
+                    <p>Drag & drop or click to upload leaf image</p>
+                    <input type="file" id="file-input" accept="image/*" hidden>
+                </div>
+            </div>
+
+            <div id="diagnosis-result" class="diagnosis-card glass-card hidden">
+                <h3>📋 Diagnosis Report</h3>
+                <div class="confidence-meter">
+                    <div class="label">Confidence</div>
+                    <div class="bar-bg">
+                        <div class="bar-fill" id="confidence-bar"></div>
+                    </div>
+                    <div class="value" id="confidence-text">0%</div>
+                </div>
+
+                <div id="disease-status" class="status-box"></div>
+
+                <button id="treatment-btn" class="btn-primary hidden">💊 Generate AI Treatment
+                    Plan</button>
+            </div>
+        </div>
+
+        <!-- Treatment Modal -->
+        <div id="treatment-modal" class="modal hidden">
+            <div class="modal-content glass-card">
+                <span class="close-modal">&times;</span>
+                <h2>🩺 AI Agronomist Prescription</h2>
+                <div id="treatment-plan-content"></div>
+                <div class="modal-actions">
+                    <button class="btn-secondary"
+                        onclick="document.getElementById('treatment-modal').classList.add('hidden')">Close</button>
+                    <button class="btn-primary" onclick="window.print()">🖨️ Print
+                        Prescription</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODULE: WEATHER -->
+    <section id="weather" class="module-section">
+        <header class="module-header">
+            <h1>Weather Station</h1>
+            <p>Detailed Analytics Coming Soon</p>
+        </header>
+        <div class="weather-dashboard">
+            <div class="weather-main glass-card">
+                <div class="weather-icon">⛅</div>
+                <div class="weather-info">
+                    <h2 id="w-temp">28°C</h2>
+                    <p id="w-condition">Partly Cloudy</p>
+                </div>
+            </div>
+            <div class="weather-details glass-card">
+                <div class="detail-item">
+                    <span>💧 Humidity</span>
+                    <span id="w-humidity">65%</span>
+                </div>
+                <div class="detail-item">
+                    <span>💨 Wind</span>
+                    <span id="w-wind">12 km/h</span>
+                </div>
+                <div class="detail-item">
+                    <span>🌱 Forecast</span>
+                    <span id="w-forecast" style="color: var(--accent-color);">Good for
+                        spraying</span>
+                </div>
+            </div>
+        </div>
+    </section>
+    <h3>Farms Monitored</h3>
+    <div class="value">124</div>
+    <div class="trend positive">+2 this week</div>
+</div>
+<div class="stat-card">
+    <h3>Diseases Prevented</h3>
+    <div class="value">89%</div>
+    <div class="trend positive">+5% efficiency</div>
+</div>
+<div class="stat-card">
+    <h3>Market Trend</h3>
+    <div class="value">Bullish</div>
+    <div class="trend neutral">Wheat Stable</div>
+</div>
+</div>
+
+<div class="charts-grid">
+    <div class="dashboard-grid">
+        <!-- Left Column: Charts -->
+        <div class="chart-section">
+            <div class="chart-card">
+                <h3>Yield History</h3>
+                <canvas id="yieldChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>Market Trends</h3>
+                <canvas id="marketChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Right Column: Weather & Insights -->
+        <div class="side-panel">
+            <!-- Blue Weather Card -->
+            <div class="weather-card">
+                <div class="weather-header">
+                    <div class="weather-location">
+                        <h2>Davanagere,</h2>
+                        <h2>Karnataka</h2>
+                    </div>
+                    <div class="weather-icon-small">☁️</div>
+                </div>
+                <div class="weather-temp">29°C</div>
+                <div class="weather-details-grid">
+                    <div class="weather-detail-box">
+                        <span>Humidity</span>
+                        <strong>79%</strong>
+                    </div>
+                    <div class="weather-detail-box">
+                        <span>Wind</span>
+                        <strong>11 km/h</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Yellow Insight Card -->
+    <div class="insight-card">
+        <div class="insight-icon">💡</div>
+        <div class="insight-content">
+            <h3>Today's Insight</h3>
+            <p>Optimal planting conditions detected for the next 48 hours. Soil moisture
+                levels are ideal, and weather forecasts show stable conditions. Consider
+                starting your wheat sowing operations.</p>
+        </div>
+    </div>
+
+    <div class="alerts-container">
+        <h3>📢 System Alerts</h3>
+        <div class="alert-card warning">
+            <span class="icon">⚠️</span>
+            <div class="content">
+                <h4>Pest Alert</h4>
+                <p>Fall Armyworm detected in Davanagere region.</p>
+            </div>
+        </div>
+        <div class="alert-card success">
+            <span class="icon">✅</span>
+            <div class="content">
+                <h4>Irrigation Complete</h4>
+                <p>Sector 4 watering schedule finished successfully.</p>
+            </div>
+        </div>
+    </div>
+    </section>
+
+    <!-- MODULE: SCOUT -->
+    <section id="scout" class="module-section">
+        <header class="module-header">
+            <h1>Agri-Scout</h1>
+            <p>Land Intelligence & Crop Suitability</p>
+        </header>
+
+        <div class="scout-layout">
+            <div class="scout-controls glass-card">
+                <h3>📍 Location Search</h3>
+                <div class="input-group">
+                    <input type="text" id="place-input" placeholder="Enter Region (e.g. Davanagere)">
+                    <button id="scout-btn" class="btn-primary">Analyze</button>
+                </div>
+
+                <div id="scout-results" class="hidden">
+                    <hr>
+                    <h3>🌱 Crop Advice</h3>
+                    <div id="crop-advice-content"></div>
+                </div>
+            </div>
+
+            <div class="map-container glass-card">
+                <div id="map"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODULE: DOCTOR -->
+    <section id="doctor" class="module-section">
+        <header class="module-header">
+            <h1>Agri-Doctor</h1>
+            <p>AI Plant Pathology Lab</p>
+        </header>
+
+        <div class="doctor-layout">
+            <div class="upload-zone glass-card" id="drop-zone">
+                <div class="upload-content">
+                    <span class="icon-large">📸</span>
+                    <h3>Upload Specimen</h3>
+                    <p>Drag & drop or click to upload leaf image</p>
+                    <input type="file" id="file-input" accept="image/*" hidden>
+                </div>
+            </div>
+
+            <div id="diagnosis-result" class="diagnosis-card glass-card hidden">
+                <h3>📋 Diagnosis Report</h3>
+                <div class="confidence-meter">
+                    <div class="label">Confidence</div>
+                    <div class="bar-bg">
+                        <div class="bar-fill" id="confidence-bar"></div>
+                    </div>
+                    <div class="value" id="confidence-text">0%</div>
+                </div>
+
+                <div id="disease-status" class="status-box"></div>
+
+                <button id="treatment-btn" class="btn-primary hidden">💊 Generate AI Treatment
+                    Plan</button>
+            </div>
+        </div>
+
+        <!-- Treatment Modal -->
+        <div id="treatment-modal" class="modal hidden">
+            <div class="modal-content glass-card">
+                <span class="close-modal">&times;</span>
+                <h2>🩺 AI Agronomist Prescription</h2>
+                <div id="treatment-plan-content"></div>
+                <div class="modal-actions">
+                    <button class="btn-secondary"
+                        onclick="document.getElementById('treatment-modal').classList.add('hidden')">Close</button>
+                    <button class="btn-primary" onclick="window.print()">🖨️ Print
+                        Prescription</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- MODULE: WEATHER -->
+    <section id="weather" class="module-section">
+        <header class="module-header">
+            <h1>Weather Station</h1>
+            <p>Detailed Analytics Coming Soon</p>
+        </header>
+        <div class="weather-dashboard">
+            <div class="weather-main glass-card">
+                <div class="weather-icon">⛅</div>
+                <div class="weather-info">
+                    <h2 id="w-temp">28°C</h2>
+                    <p id="w-condition">Partly Cloudy</p>
+                </div>
+            </div>
+            <div class="weather-details glass-card">
+                <div class="detail-item">
+                    <span>💧 Humidity</span>
+                    <span id="w-humidity">65%</span>
+                </div>
+                <div class="detail-item">
+                    <span>💨 Wind</span>
+                    <span id="w-wind">12 km/h</span>
+                </div>
+                <div class="detail-item">
+                    <span>🌱 Forecast</span>
+                    <span id="w-forecast" style="color: var(--accent-color);">Good for
+                        spraying</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    </main>
 </div>
 <div id="toast-container"></div>
+
 {% endblock %}

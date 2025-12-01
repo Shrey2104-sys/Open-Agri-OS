@@ -1,0 +1,57 @@
+# Open-Agri OS - Technical Project Report
+
+## 1. Project Overview
+Open-Agri OS is a comprehensive, AI-powered farm management dashboard designed to assist farmers with decision-making through real-time data, satellite analysis, and disease diagnosis. The application aims to modernize agriculture by providing an "Expert Level" interface that is both professional and intuitive.
+
+## 2. Technology Stack
+
+### Backend
+*   **Framework:** Flask (Python) - Lightweight and flexible for handling API routes and serving templates.
+*   **AI Integration:** Google Gemini API (Generative AI) - Used for:
+    *   `Agri-Doctor`: Analyzing plant leaf images to diagnose diseases and recommend treatments.
+    *   `Agri-Scout`: Generating crop suitability advice based on location and soil data.
+*   **Database:** SQLite (via Flask-SQLAlchemy) - Stores user data (extensible for farm records).
+*   **Authentication:** Flask-Login - Secure user session management.
+
+### Frontend
+*   **Core:** HTML5, CSS3, JavaScript (Vanilla).
+*   **Design System:** "Bolt" Aesthetic - Custom CSS variables for a consistent theme (Dark Green `#003d29`, Cream `#fdfbf7`, Blue/Yellow accents). Features glassmorphism, smooth transitions, and responsive grid layouts.
+*   **Mapping:** Leaflet.js + `leaflet-heat` plugin.
+    *   **Base Layer:** Esri World Imagery (Satellite View).
+    *   **Overlay:** Simulated NDVI (Normalized Difference Vegetation Index) Heatmap for crop health visualization.
+*   **Data Visualization:** Chart.js - Interactive line and bar charts for market trends and yield history.
+
+## 3. Key Modules & Features
+
+### A. Dashboard (Command Center)
+*   **Market Ticker:** Scrolling ticker showing real-time commodity prices (Wheat, Maize, Rice, etc.) with up/down trend indicators.
+*   **Farm Overview:** Key performance indicators (KPIs) for farms monitored, disease prevention rates, and market sentiment.
+*   **Visual Analytics:**
+    *   `Yield History`: Bar chart tracking production over years.
+    *   `Market Trends`: Line chart tracking price fluctuations.
+*   **Weather Widget:** Displays current temperature, humidity, wind speed, and spraying conditions.
+
+### B. Agri-Scout (Land Intelligence)
+*   **Function:** Location-based analysis for crop planning.
+*   **Tech:** Integrates Leaflet.js with a custom satellite view.
+*   **Feature:** "NDVI Heatmap" - Visualizes vegetation health using a color-coded gradient (Red=Stressed to Green=High Vigor) overlaid on the satellite map.
+*   **Output:** Provides AI-generated advice on season, soil type, and recommended crops for the selected region.
+
+### C. Agri-Doctor (AI Pathologist)
+*   **Function:** Disease diagnosis from images.
+*   **Workflow:**
+    1.  User uploads/drags a photo of a plant leaf.
+    2.  Image is processed and sent to Google Gemini Vision API.
+    3.  AI analyzes the image for pathogens/deficiencies.
+    4.  **Output:** Returns a diagnosis (Healthy/Disease Name), confidence score, and a detailed treatment plan (chemical/organic controls).
+
+## 4. Recent Technical Upgrades
+*   **UI Overhaul:** Transitioned to a premium "Midnight Gourmet/Bolt" aesthetic with refined typography (Outfit/Inter fonts) and polished interactive elements.
+*   **Sidebar Navigation:** Implemented a collapsible, hover-expandable sidebar with smart text hiding/showing logic for a clean UX.
+*   **Robust Error Handling:** Fixed template inheritance issues (`TemplateSyntaxError`) and ensured graceful degradation for missing data.
+*   **Satellite Integration:** Upgraded standard maps to satellite imagery to provide farmers with realistic context.
+
+## 5. Future Roadmap
+*   **IoT Integration:** Connect real soil sensors (Arduino/ESP32) to the dashboard.
+*   **Marketplace:** P2P buying/selling platform for farmers.
+*   **Offline Mode:** PWA (Progressive Web App) capabilities for low-connectivity areas.

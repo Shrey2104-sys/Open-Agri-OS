@@ -1,80 +1,106 @@
-import os
 import tensorflow as tf
 from tensorflow.keras.applications import MobileNetV2
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.models import Model
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.optimizers import Adam
+import os
 
 # --- Configuration ---
-DATASET_DIR = 'dataset' # Folder containing class subfolders
-MODEL_SAVE_PATH = 'model.h5'
+# Using the specific folder provided by the user
+DATASET_DIR = r"C:\Users\shrey\Documents\IWP\OpenAgriOS\sample for mobilenetv2"
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
 EPOCHS = 5
+MODEL_SAVE_PATH = r"C:\Users\shrey\Documents\IWP\OpenAgriOS\model.h5"
 
 def train_model():
-    """
-    Trains a MobileNetV2 model on the dataset found in DATASET_DIR.
-    """
+    print(f"TensorFlow Version: {tf.__version__}")
+    
     if not os.path.exists(DATASET_DIR):
-        print(f"Error: Dataset directory '{DATASET_DIR}' not found.")
-        print("Please create a 'dataset' folder and add subfolders for each class (e.g., dataset/Tomato_Blight, dataset/Healthy).")
+        print(f"Error: Dataset directory not found at {DATASET_DIR}")
         return
 
-    # Data Augmentation
-    train_datagen = ImageDataGenerator(
-        rescale=1./255,
-        rotation_range=20,
-        width_shift_range=0.2,
-        height_shift_range=0.2,
-        shear_range=0.2,
-        zoom_range=0.2,
-        horizontal_flip=True,
-        validation_split=0.2
+    print(f"\n--- Loading Data from {DATASET_DIR} ---")
+    
+    # Load Training Data (80%)
+    try:
+        train_ds = tf.keras.utils.image_dataset_from_directory(
+            DATASET_DIR,
+            validation_split=0.2,
+            subset="training",
+            seed=123,
+            image_size=IMG_SIZE,
+            batch_size=BATCH_SIZE
+        )
+
+        # Load Validation Data (20%)
+        val_ds = tf.keras.utils.image_dataset_from_directory(
+            DATASET_DIR,
+            validation_split=0.2,
+            subset="validation",
+            seed=123,
+            image_size=IMG_SIZE,
+            batch_size=BATCH_SIZE
+        )
+    except ValueError as e:
+        print(f"Error loading dataset: {e}")
+        print("Ensure the dataset folder contains subfolders for each class.")
+        return
+
+    # Get class names
+    class_names = train_ds.class_names
+    num_classes = len(class_names)
+    print(f"Classes found: {class_names}")
+
+    # Optimize for performance
+    AUTOTUNE = tf.data.AUTOTUNE
+    train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
+    val_ds = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
+
+    # 2. Build Model (Transfer Learning)
+    print("\n--- Building MobileNetV2 Model ---")
+    
+    # Load Base Model (Pre-trained on ImageNet)
+    base_model = MobileNetV2(
+        input_shape=IMG_SIZE + (3,),
+        include_top=False, 
+        weights='imagenet'
     )
+    
+    # Freeze the base model
+    base_model.trainable = False
 
-    train_generator = train_datagen.flow_from_directory(
-        DATASET_DIR,
-        target_size=IMG_SIZE,
-        batch_size=BATCH_SIZE,
-        class_mode='categorical',
-        subset='training'
-    )
-
-    validation_generator = train_datagen.flow_from_directory(
-        DATASET_DIR,
-        target_size=IMG_SIZE,
-        batch_size=BATCH_SIZE,
-        class_mode='categorical',
-        subset='validation'
-    )
-
-    # Base Model (MobileNetV2)
-    base_model = MobileNetV2(weights='imagenet', include_top=False, input_shape=(224, 224, 3))
-    base_model.trainable = False # Freeze base layers
-
-    # Custom Head
+    # Add Custom Head
     x = base_model.output
     x = GlobalAveragePooling2D()(x)
-    x = Dense(1024, activation='relu')(x)
-    predictions = Dense(train_generator.num_classes, activation='softmax')(x)
+    predictions = Dense(num_classes, activation='softmax')(x)
 
+    # Combine
     model = Model(inputs=base_model.input, outputs=predictions)
 
-    # Compile
-    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    # 3. Compile
+    print("\n--- Compiling Model ---")
+    model.compile(
+        optimizer='adam',
+        loss='sparse_categorical_crossentropy',
+        metrics=['accuracy']
+    )
+    
+    model.summary()
 
-    # Train
-    print("Starting training...")
-    model.fit(
-        train_generator,
-        epochs=EPOCHS,
-        validation_data=validation_generator
+    # 4. Train
+    print(f"\n--- Starting Training for {EPOCHS} Epochs ---")
+    history = model.fit(
+        train_ds,
+        validation_data=val_ds,
+        epochs=EPOCHS
     )
 
-    # Save
+    # 5. Save
+    print(f"\n--- Saving Model to {MODEL_SAVE_PATH} ---")
     model.save(MODEL_SAVE_PATH)
-    print(f"Model saved to {MODEL_SAVE_PATH}")
+    print("✅ Model saved successfully!")
+    print(f"Class Names: {class_names}")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     train_model()
