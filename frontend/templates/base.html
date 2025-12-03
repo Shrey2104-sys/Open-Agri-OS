@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open-Agri OS</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Market Ticker Header -->
+        <header class="market-ticker-header">
+            <div class="ticker-label">LIVE MARKETS:</div>
+            <div class="ticker-container">
+                <div class="ticker-content">
+                    <span class="ticker-item up">Wheat: ₹2,250 ▲ 1.2%</span>
+                    <span class="ticker-item down">Rice: ₹3,100 ▼ 0.5%</span>
+                    <span class="ticker-item up">Maize: ₹1,850 ▲ 2.1%</span>
+                    <span class="ticker-item neutral">Soybean: ₹4,200 ➖ 0.0%</span>
+                    <span class="ticker-item up">Cotton: ₹6,100 ▲ 0.8%</span>
+                    <span class="ticker-item down">Tomato: ₹1,200 ▼ 3.5%</span>
+                    <span class="ticker-item up">Potato: ₹1,500 ▲ 1.5%</span>
+                    <!-- Duplicate for seamless loop -->
+                    <span class="ticker-item up">Wheat: ₹2,250 ▲ 1.2%</span>
+                    <span class="ticker-item down">Rice: ₹3,100 ▼ 0.5%</span>
+                    <span class="ticker-item up">Maize: ₹1,850 ▲ 2.1%</span>
+                    <span class="ticker-item neutral">Soybean: ₹4,200 ➖ 0.0%</span>
+                    <span class="ticker-item up">Cotton: ₹6,100 ▲ 0.8%</span>
+                </div>
+            </div>
+        </header>
+        {% block content %}{% endblock %}
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>

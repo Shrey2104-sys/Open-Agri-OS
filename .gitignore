@@ -1,10 +1,12 @@
+# Python
 __pycache__/
-*.py[cod]
-*$py.class
-.env
-instance/
-.venv/
-env/
+*.pyc
 venv/
-*.db
+.env
+
+# OS
 .DS_Store
+
+# Explicitly allow these (Hackathon Demo)
+!model.h5
+!assets/

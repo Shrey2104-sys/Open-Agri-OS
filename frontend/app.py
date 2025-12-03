@@ -1,4 +1,9 @@
 import os
+import sys
+
+# Add backend to system path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from flask_sqlalchemy import SQLAlchemy
@@ -12,6 +17,7 @@ app = Flask(__name__, static_folder='static', template_folder='templates')
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'open-agri-os-secret-key')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['ASSETS_FOLDER'] = '../assets'
 
 # Enable CORS
 CORS(app)
@@ -123,15 +129,25 @@ def advice():
 def scout_info():
     data = request.json
     place_name = data.get('place_name')
+    lat = data.get('lat')
+    lon = data.get('lon')
     
     from geopy.geocoders import Nominatim
     
     try:
-        geolocator = Nominatim(user_agent="open_agri_os_v5")
-        location = geolocator.geocode(place_name)
-        if location:
-            coords = (location.latitude, location.longitude)
-            
+        coords = None
+        
+        if lat and lon:
+            coords = (float(lat), float(lon))
+            if not place_name:
+                place_name = "Current Location"
+        else:
+            geolocator = Nominatim(user_agent="open_agri_os_v5")
+            location = geolocator.geocode(place_name)
+            if location:
+                coords = (location.latitude, location.longitude)
+        
+        if coords:
             # Mock Weather (Simulated for now, could be API later)
             weather = {
                 "temp": 28,
@@ -144,18 +160,50 @@ def scout_info():
             rec = data_engine.get_crop_recommendation(place_name, weather)
             
             # Map
-            map_data = data_engine.get_satellite_map(place_name)
+            # Pass coords to get_satellite_map if it supports it, or just place_name
+            # data_engine.get_satellite_map currently takes a location string. 
+            # We might need to update it to take coords or just pass the name.
+            # For now, let's pass the name, but we might want to update data_engine too if it relies on geocoding.
+            # Actually, looking at data_engine.py (from memory/context), it takes a location string.
+            # Let's check data_engine.py again to be sure.
+            
+            # Wait, if I pass "Current Location" to data_engine, it might fail if it tries to geocode it.
+            # Let's check data_engine.py content from previous turns.
+            # It accepts `location` (string) or `coords` (tuple)?
+            # In step 2208 summary: "The function now accepts either coordinates or a location name".
+            # So I can pass coords to it.
+            
+            map_data = data_engine.get_satellite_map(coords if lat and lon else place_name)
             
             return jsonify({
                 'coords': coords,
                 'recommendation': rec,
                 'weather': weather,
-                'ndvi': {'status': 'success', 'image_path': map_data.get('image_url')} 
+                'ndvi': {
+                    'status': 'success', 
+                    'image_path': map_data.get('image_url'),
+                    'bbox': map_data.get('bbox')
+                } 
             })
         return jsonify({'error': 'Location not found'}), 404
     except Exception as e:
         print(e)
         return jsonify({'error': 'Geocoding error'}), 500
+
+@app.route('/api/get_advice', methods=['POST'])
+def get_advice():
+    try:
+        data = request.json
+        disease = data.get('disease')
+        ndvi = data.get('ndvi')
+        
+        # Call data engine to get advice (real or mock)
+        advice = data_engine.get_advice(disease, ndvi)
+        
+        return jsonify(advice)
+    except Exception as e:
+        print(f"Advice Error: {e}")
+        return jsonify({'error': 'Failed to generate advice'}), 500
 
 # --- Main ---
 if __name__ == '__main__':
