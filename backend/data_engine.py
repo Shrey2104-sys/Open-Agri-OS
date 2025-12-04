@@ -205,9 +205,10 @@ def _get_mock_map():
         "message": "Simulated Data (API Unavailable)"
     }
 
-def get_crop_recommendation(location, weather):
+def get_crop_recommendation(location, weather, language='en'):
     """
     Generates crop recommendations based on location and weather using Gemini.
+    Supports Hybrid Translation (Native Explanation + English Technical Terms).
     """
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
@@ -221,18 +222,36 @@ def get_crop_recommendation(location, weather):
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel('gemini-1.5-flash')
         
+        # Language Mapping
+        lang_map = {
+            'hi': 'Hindi (हिंदी)',
+            'kn': 'Kannada (ಕನ್ನಡ)',
+            'en': 'English'
+        }
+        target_lang = lang_map.get(language, 'English')
+
         prompt = f"""
-        You are an expert agronomist.
+        You are an expert Indian Agronomist.
         Location: {location}
         Current Weather: {weather}
+        User Language: {target_lang}
+
+        Task: Provide a recommendation for the SINGLE best crop to grow.
         
-        Based on this, provide a recommendation for the SINGLE best crop to grow.
+        CRITICAL HYBRID TRANSLATION RULE:
+        - Explain the "reason" in {target_lang}.
+        - BUT you must keep the following in ENGLISH (Latin Script):
+          1. Chemical/Medicine Names (e.g., 'Chlorpyrifos')
+          2. Numerical digits (e.g., '20kg', '500ml')
+          3. Specific Crop Variety Names (e.g., 'Sona Masuri')
+        - Do NOT transliterate these technical terms.
+
         Return ONLY a JSON object with these exact keys:
-        - "crop": Name of the crop
-        - "season": Current agricultural season
-        - "soil": Likely soil type
-        - "water": Water requirements (e.g. "Moderate, 500mm")
-        - "reason": A short, 1-sentence reason why this crop is best.
+        - "crop": Name of the crop (In English)
+        - "season": Current agricultural season (In English)
+        - "soil": Likely soil type (In English)
+        - "water": Water requirements (In English)
+        - "reason": A short, 1-sentence reason why this crop is best (In {target_lang} following the Hybrid Rule).
         
         Do not use Markdown formatting.
         """
@@ -254,9 +273,102 @@ def get_crop_recommendation(location, weather):
             f.write(f"Gemini Scout Error: {e}\n")
         print(f"Gemini Scout Error: {e}")
         return {
-            "crop": "Wheat (Fallback)",
-            "season": "Rabi",
-            "soil": "Loamy",
-            "water": "Moderate",
             "reason": "Standard crop for this season (API Unavailable)."
+        }
+
+# --- Govt Expert Connect (Dynamic) ---
+import requests
+
+# 1. THE DIRECTORY (Add as many real districts as you want for the demo)
+DISTRICT_DIRECTORY = {
+    "Davanagere": {
+        "phone": "08192-255123",
+        "officer": "Dr. Suresh Patil (Davanagere DAO)",
+        "office": "District Administrative Complex, PB Road"
+    },
+    "Shivamogga": { # Note: OpenStreetMap might return "Shimoga" or "Shivamogga"
+        "phone": "08182-223344",
+        "officer": "Smt. Lakshmi Hegde",
+        "office": "KVK Shimoga, Sogane"
+    },
+    "Shimoga": { # Handling alternate spelling
+        "phone": "08182-223344",
+        "officer": "Smt. Lakshmi Hegde",
+        "office": "KVK Shimoga, Sogane"
+    },
+    "Bengaluru Urban": {
+        "phone": "080-22212221",
+        "officer": "Directorate of Agriculture",
+        "office": "Seshadri Road, Bangalore"
+    },
+    "Bangalore Urban": {
+        "phone": "080-22212221",
+        "officer": "Directorate of Agriculture",
+        "office": "Seshadri Road, Bangalore"
+    }
+}
+
+DEFAULT_CONTACT = {
+    "phone": "1800-180-1551",
+    "officer": "Kisan Call Center (National)",
+    "office": "Toll-Free Helpline"
+}
+
+def get_govt_contacts(lat, lon):
+    """
+    1. Takes Lat/Lon.
+    2. Asks OpenStreetMap: "What district is this?"
+    3. Returns the specific phone number for that district.
+    """
+    try:
+        # --- A. Reverse Geocoding (Finding the District) ---
+        # We use OpenStreetMap's free API
+        url = f"https://nominatim.openstreetmap.org/reverse?format=json&lat={lat}&lon={lon}"
+        
+        # IMPORTANT: OpenStreetMap requires a User-Agent header, or they block you.
+        headers = {'User-Agent': 'OpenAgri-Hackathon-App/1.0'}
+        
+        response = requests.get(url, headers=headers).json()
+        
+        # Extract district from the address object
+        address = response.get('address', {})
+        # Different maps call it 'state_district', 'district', or 'county'
+        district = address.get('state_district') or address.get('district') or address.get('county') or "Unknown"
+
+        print(f"📍 Detected District: {district}") # Print to console for your demo!
+
+        # --- B. Lookup in Directory ---
+        # Try to find the district in our dictionary. If not found, use Default.
+        # We use 'get' to avoid crashing if the district isn't in our list.
+        contact_info = DISTRICT_DIRECTORY.get(district, DEFAULT_CONTACT)
+
+        return {
+            "status": "success",
+            "district": district,
+            "officials": [
+                {
+                    "role": "District Officer",
+                    "name": contact_info["officer"],
+                    "office": contact_info["office"],
+                    "phone": contact_info["phone"],
+                    "distance": "Calculated via GPS" # Placeholder
+                }
+            ]
+        }
+
+    except Exception as e:
+        print(f"Error finding district: {e}")
+        # Fallback to National Number if internet/API fails
+        return {
+            "status": "success",
+            "district": "India (Fallback)",
+            "officials": [
+                {
+                    "role": "National Helpline",
+                    "name": DEFAULT_CONTACT["officer"],
+                    "office": DEFAULT_CONTACT["office"],
+                    "phone": DEFAULT_CONTACT["phone"],
+                    "distance": "N/A"
+                }
+            ]
         }

@@ -1,43 +1,157 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="auth-container">
-    <div class="auth-card">
-        <div class="auth-header">
-            <h1>Open-Agri OS</h1>
-            <p>Intelligent Farm Management</p>
+<div class="landing-container">
+    <!-- Left Side: Image Slider -->
+    <div class="slider-section">
+        <div class="slider-wrapper">
+            <div class="slide active"
+                style="background-image: url('https://images.unsplash.com/photo-1625246333195-58f214014a2b?q=80&w=1935&auto=format&fit=crop');">
+                <div class="slide-content">
+                    <h2>Smart Farming</h2>
+                    <p>AI-driven insights for better yields.</p>
+                </div>
+            </div>
+            <div class="slide"
+                style="background-image: url('https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?q=80&w=2070&auto=format&fit=crop');">
+                <div class="slide-content">
+                    <h2>Precision Agriculture</h2>
+                    <p>Monitor soil health and moisture in real-time.</p>
+                </div>
+            </div>
+            <div class="slide"
+                style="background-image: url('https://images.unsplash.com/photo-1586771107445-d3ca888129ff?q=80&w=2072&auto=format&fit=crop');">
+                <div class="slide-content">
+                    <h2>Disease Detection</h2>
+                    <p>Instant diagnosis with our Agri-Doctor AI.</p>
+                </div>
+            </div>
         </div>
+        <div class="slider-indicators">
+            <span class="dot active" onclick="currentSlide(0)"></span>
+            <span class="dot" onclick="currentSlide(1)"></span>
+            <span class="dot" onclick="currentSlide(2)"></span>
+        </div>
+    </div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }}">{{ message }}</div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-
-        <form method="POST" action="{{ url_for('login') if not mode == 'signup' else url_for('signup') }}">
-            <div class="form-group">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" required placeholder="Farmer ID">
-            </div>
-            <div class="form-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" required placeholder="••••••••">
+    <!-- Right Side: Login Form -->
+    <div class="login-section">
+        <div class="auth-card glass-card">
+            <div class="auth-header">
+                <h1 class="brand-title">🌿 Open-Agri OS</h1>
+                <p class="brand-subtitle">Welcome to the Future of Farming</p>
             </div>
 
-            <button type="submit" class="btn-primary">
-                {{ 'Login' if not mode == 'signup' else 'Create Account' }}
-            </button>
-        </form>
-
-        <div class="auth-footer">
-            {% if not mode == 'signup' %}
-            <p>New to Open-Agri? <a href="{{ url_for('signup') }}">Sign Up</a></p>
-            {% else %}
-            <p>Already have an account? <a href="{{ url_for('login') }}">Login</a></p>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">{{ message }}</div>
+            {% endfor %}
             {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('login') if not mode == 'signup' else url_for('signup') }}"
+                id="loginForm" novalidate>
+                <div class="form-group">
+                    <label for="username">Farmer ID / Username</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">👤</span>
+                        <input type="text" id="username" name="username" required placeholder="Enter your ID">
+                    </div>
+                    <small class="error-text hidden" id="username-error">Fields cannot be empty</small>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <div class="input-wrapper">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" id="password" name="password" required placeholder="••••••••">
+                    </div>
+                    <small class="error-text hidden" id="password-error">Fields cannot be empty</small>
+                </div>
+
+                <button type="submit" class="btn-primary full-width">
+                    {{ 'Login' if not mode == 'signup' else 'Create Account' }} <span class="icon-right">➔</span>
+                </button>
+            </form>
+
+            <div class="auth-footer">
+                {% if not mode == 'signup' %}
+                <p>New Member? <a href="{{ url_for('signup') }}">Register Here</a></p>
+                {% else %}
+                <p>Already have an account? <a href="{{ url_for('login') }}">Login Here</a></p>
+                {% endif %}
+            </div>
         </div>
     </div>
 </div>
+
+<script>
+    // Simple Slider Logic
+    let slideIndex = 0;
+    const slides = document.querySelectorAll('.slide');
+    const dots = document.querySelectorAll('.dot');
+
+    function showSlide(n) {
+        slides.forEach(slide => slide.classList.remove('active'));
+        dots.forEach(dot => dot.classList.remove('active'));
+
+        slideIndex = n;
+        if (slideIndex >= slides.length) slideIndex = 0;
+        if (slideIndex < 0) slideIndex = slides.length - 1;
+
+        slides[slideIndex].classList.add('active');
+        dots[slideIndex].classList.add('active');
+    }
+
+    function currentSlide(n) {
+        showSlide(n);
+    }
+
+    function autoSlide() {
+        slideIndex++;
+        showSlide(slideIndex);
+    }
+
+    setInterval(autoSlide, 5000); // Change slide every 5 seconds
+
+    // Form Validation Logic
+    const form = document.getElementById('loginForm');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const usernameError = document.getElementById('username-error');
+    const passwordError = document.getElementById('password-error');
+
+    form.addEventListener('submit', (e) => {
+        let isValid = true;
+
+        // Reset errors
+        usernameError.classList.add('hidden');
+        passwordError.classList.add('hidden');
+        usernameInput.classList.remove('input-error');
+        passwordInput.classList.remove('input-error');
+
+        // Validate Username
+        if (!usernameInput.value.trim()) {
+            usernameError.classList.remove('hidden');
+            usernameInput.classList.add('input-error');
+            isValid = false;
+        }
+
+        // Validate Password
+        if (!passwordInput.value.trim()) {
+            passwordError.classList.remove('hidden');
+            passwordInput.classList.add('input-error');
+            isValid = false;
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+        }
+    });
+
+    // Clear password on server-side error (Flash message present)
+    {% if get_flashed_messages() %}
+    if (passwordInput) passwordInput.value = '';
+    {% endif %}
+</script>
 {% endblock %}

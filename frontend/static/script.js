@@ -185,7 +185,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     fetchWeather(lat, lon, placeName);
                 }
 
-                const payload = { place_name: placeName || "Custom Location" };
+                const payload = {
+                    place_name: placeName || "Custom Location",
+                    language: window.currentLanguage || 'en'
+                };
                 if (lat && lon) {
                     payload.lat = lat;
                     payload.lon = lon;
@@ -412,5 +415,192 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
         });
+    }
+
+    // --- Expert Connect Feature ---
+    window.fetchExperts = async function () {
+        const expertList = document.getElementById('expert-list');
+        expertList.innerHTML = '<div class="placeholder-text" style="grid-column: 1/-1; text-align: center;">Locating... <span class="typing-dots">...</span></div>';
+
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by your browser.");
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(async (position) => {
+            // Real Coordinates
+            let lat = position.coords.latitude;
+            let lon = position.coords.longitude;
+
+            // --- DEMO MODE (Uncomment to force Davanagere) ---
+            // const lat = 14.4644; 
+            // const lon = 75.9218; 
+            // -------------------------------------------------
+
+            try {
+                const response = await fetch('/api/expert-contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ lat: lat, lon: lon })
+                });
+                const data = await response.json();
+
+                // Handle new response structure { status, district, officials }
+                const contacts = data.officials || [];
+
+                expertList.innerHTML = '';
+
+                if (data.district) {
+                    const districtHeader = document.createElement('div');
+                    districtHeader.style.gridColumn = "1/-1";
+                    districtHeader.style.marginBottom = "10px";
+                    districtHeader.innerHTML = `<p style="color: var(--accent-color); font-weight: 600;">📍 Detected District: ${data.district}</p>`;
+                    expertList.appendChild(districtHeader);
+                }
+
+                contacts.forEach(contact => {
+                    const card = document.createElement('div');
+                    card.className = 'expert-card';
+                    card.innerHTML = `
+                        <div class="expert-info">
+                            <h4>${contact.name}</h4>
+                            <p class="role">${contact.role}</p>
+                            <p class="office"><i class="ph ph-buildings"></i> ${contact.office}</p>
+                            <p class="distance"><i class="ph ph-map-pin"></i> ${contact.distance}</p>
+                            <p class="phone-display" style="color: var(--text-900); font-weight: 500; margin-top: 4px;"><i class="ph ph-phone"></i> ${contact.phone}</p>
+                        </div>
+                        <a href="tel:${contact.phone}" class="btn-call">
+                            Call
+                        </a>
+                    `;
+                    expertList.appendChild(card);
+                });
+
+            } catch (error) {
+                console.error('Error fetching experts:', error);
+                expertList.innerHTML = '<div class="error-text">Failed to load experts.</div>';
+            }
+        }, (error) => {
+            alert("Unable to retrieve your location.");
+            expertList.innerHTML = '<div class="placeholder-text">Location access denied.</div>';
+        });
+    };
+
+    // --- Language & Translation Logic ---
+    window.currentLanguage = localStorage.getItem('app_lang') || null;
+
+    // Static Dictionary for Instant UI Translation
+    const TRANSLATIONS = {
+        'en': {
+            'dash-overview': 'Farm Overview',
+            'dash-welcome': 'Welcome back',
+            'dash-alerts': 'Active Alerts',
+            'dash-critical': 'Critical',
+            'dash-action': 'Action Required',
+            'dash-moisture': 'Soil Moisture',
+            'dash-optimal': 'Optimal',
+            'dash-online': 'Sensor Online',
+            'dash-harvest': 'Next Harvest',
+            'dash-days': 'Days',
+            'dash-device': 'Device Status',
+            'dash-go': 'All Systems Go',
+            'dash-battery': 'Battery',
+            'dash-yield': 'Yield History',
+            'dash-humidity': 'Humidity',
+            'dash-wind': 'Wind',
+            'sidebar-0': 'Dashboard',
+            'sidebar-1': 'Agri-Scout',
+            'sidebar-2': 'Agri-Doctor',
+            'sidebar-3': 'Language / भाषा'
+        },
+        'hi': {
+            'dash-overview': 'खेत का अवलोकन',
+            'dash-welcome': 'वापसी पर स्वागत है',
+            'dash-alerts': 'सक्रिय अलर्ट',
+            'dash-critical': 'गंभीर',
+            'dash-action': 'कार्रवाई आवश्यक',
+            'dash-moisture': 'मिट्टी की नमी',
+            'dash-optimal': 'अनुकूल',
+            'dash-online': 'सेंसर ऑनलाइन',
+            'dash-harvest': 'अगली फसल',
+            'dash-days': 'दिन',
+            'dash-device': 'उपकरण स्थिति',
+            'dash-go': 'सभी सिस्टम ठीक हैं',
+            'dash-battery': 'बैटरी',
+            'dash-yield': 'उपज इतिहास',
+            'dash-humidity': 'नमी',
+            'dash-wind': 'हवा',
+            'sidebar-0': 'डैशबोर्ड',
+            'sidebar-1': 'एग्री-स्काउट',
+            'sidebar-2': 'एग्री-डॉक्टर',
+            'sidebar-3': 'भाषा / Language'
+        },
+        'kn': {
+            'dash-overview': 'ಕೃಷಿ ಅವಲೋಕನ',
+            'dash-welcome': 'ಸ್ವಾಗತ',
+            'dash-alerts': 'ಸಕ್ರಿಯ ಎಚ್ಚರಿಕೆಗಳು',
+            'dash-critical': 'ಗಂಭೀರ',
+            'dash-action': 'ಕ್ರಮ ಅಗತ್ಯವಿದೆ',
+            'dash-moisture': 'ಮಣ್ಣಿನ ತೇವಾಂಶ',
+            'dash-optimal': 'ಸೂಕ್ತವಾಗಿದೆ',
+            'dash-online': 'ಸೆನ್ಸಾರ್ ಆನ್‌ಲೈನ್',
+            'dash-harvest': 'ಮುಂದಿನ ಕೊಯ್ಲು',
+            'dash-days': 'ದಿನಗಳು',
+            'dash-device': 'ಸಾಧನ ಸ್ಥಿತಿ',
+            'dash-go': 'ಎಲ್ಲಾ ವ್ಯವಸ್ಥೆಗಳು ಸರಿಯಾಗಿವೆ',
+            'dash-battery': 'ಬ್ಯಾಟರಿ',
+            'dash-yield': 'ಇಳುವರಿ ಇತಿಹಾಸ',
+            'dash-humidity': 'ತೇವಾಂಶ',
+            'dash-wind': 'ಗಾಳಿ',
+            'sidebar-0': 'ಡ್ಯಾಶ್‌ಬೋರ್ಡ್',
+            'sidebar-1': 'ಅಗ್ರಿ-ಸ್ಕೌಟ್',
+            'sidebar-2': 'ಅಗ್ರಿ-ಡಾಕ್ಟರ್',
+            'sidebar-3': 'ಭಾಷೆ / Language'
+        }
+    };
+
+    window.openLanguageModal = function () {
+        document.getElementById('language-modal').classList.remove('hidden');
+    };
+
+    window.closeLanguageModal = function () {
+        document.getElementById('language-modal').classList.add('hidden');
+    };
+
+    window.setLanguage = function (lang) {
+        window.currentLanguage = lang;
+        localStorage.setItem('app_lang', lang);
+
+        // Hide Gatekeeper & Modal
+        const gate = document.getElementById('language-gate');
+        if (gate) gate.classList.add('hidden');
+        closeLanguageModal();
+
+        // Apply Static Translations
+        const dict = TRANSLATIONS[lang] || TRANSLATIONS['en'];
+
+        // Dashboard IDs
+        for (const [id, text] of Object.entries(dict)) {
+            if (id.startsWith('sidebar-')) continue;
+            const el = document.getElementById(id);
+            if (el) el.textContent = text;
+        }
+
+        // Sidebar Links
+        const sidebarLinks = document.querySelectorAll('.nav-item .link-text');
+        sidebarLinks.forEach((link, index) => {
+            const key = `sidebar-${index}`;
+            if (dict[key]) link.textContent = dict[key];
+        });
+    };
+
+    // Check Language Gate on Load
+    if (!window.currentLanguage) {
+        // Show Gatekeeper
+        const gate = document.getElementById('language-gate');
+        if (gate) gate.classList.remove('hidden');
+    } else {
+        // Apply saved language immediately
+        setLanguage(window.currentLanguage);
     }
 });

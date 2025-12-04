@@ -42,11 +42,46 @@ def load_user(user_id):
     return db.session.get(User, int(user_id))
 
 # --- Routes: Authentication ---
+# --- Routes: Authentication ---
+@app.route('/', methods=['GET'])
+def landing():
+    # Force render login page as requested
+    return render_template('login.html')
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+        
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        
+        # Mock Auth (Hardcoded as requested)
+        if username == 'admin' and password == '1234':
+            # Create a dummy user object or fetch a specific admin user
+            # For simplicity in this Flask-Login setup, we need a real User object.
+            # We'll check if admin exists, if not create it, or just use the first user.
+            # Better approach: Check DB first, if not found, check hardcoded.
+            # Actually, let's just use the DB for consistency but ensure 'admin' exists or works.
+            # Since I can't easily "mock" a User object without it being in the DB for Flask-Login's user_loader,
+            # I will check if 'admin' exists in DB. If not, I'll create it on the fly or just rely on the DB check.
+            
+            # Wait, the user wants "Mock Authentication Logic".
+            # If I just stick to DB, I might miss the "Mock" point.
+            # But Flask-Login needs a user_id.
+            # Let's try to find 'admin' in DB.
+            user = User.query.filter_by(username='admin').first()
+            if not user:
+                # Create admin if it doesn't exist (Auto-seeding for mock)
+                user = User(username='admin', password=generate_password_hash('1234', method='scrypt'))
+                db.session.add(user)
+                db.session.commit()
+            
+            login_user(user)
+            return redirect(url_for('dashboard'))
+
+        # Standard DB Auth
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password, password):
@@ -58,6 +93,9 @@ def login():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -76,10 +114,10 @@ def signup():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('login'))
+    return redirect(url_for('landing'))
 
 # --- Routes: Main App ---
-@app.route('/')
+@app.route('/dashboard')
 @login_required
 def dashboard():
     return render_template('index.html', user=current_user)
@@ -157,7 +195,8 @@ def scout_info():
             }
             
             # Dynamic AI Recommendation
-            rec = data_engine.get_crop_recommendation(place_name, weather)
+            language = data.get('language', 'en')
+            rec = data_engine.get_crop_recommendation(place_name, weather, language)
             
             # Map
             # Pass coords to get_satellite_map if it supports it, or just place_name
@@ -204,6 +243,17 @@ def get_advice():
     except Exception as e:
         print(f"Advice Error: {e}")
         return jsonify({'error': 'Failed to generate advice'}), 500
+
+@app.route('/api/expert-contact', methods=['POST'])
+@login_required
+def expert_contact():
+    data = request.json
+    lat = data.get('lat')
+    lon = data.get('lon')
+    
+    # In a real app, we would validate lat/lon
+    contacts = data_engine.get_govt_contacts(lat, lon)
+    return jsonify(contacts)
 
 # --- Main ---
 if __name__ == '__main__':

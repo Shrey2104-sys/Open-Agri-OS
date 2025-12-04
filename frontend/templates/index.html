@@ -17,8 +17,8 @@
             <a href="#" class="nav-item" data-target="doctor">
                 <span class="icon">🔬</span> <span class="link-text">Agri-Doctor</span>
             </a>
-            <a href="#" class="nav-item" data-target="weather">
-                <span class="icon">🌦️</span> <span class="link-text">Weather</span>
+            <a href="#" class="nav-item" onclick="openLanguageModal()">
+                <span class="icon">🗣️</span> <span class="link-text">Language / भाषा</span>
             </a>
         </nav>
         <div class="sidebar-footer">
@@ -35,31 +35,32 @@
         <!-- MODULE: DASHBOARD -->
         <section id="dashboard" class="module-section active">
             <header class="module-header">
-                <h1>Farm Overview</h1>
-                <p>Welcome back, {{ user.username }}</p>
+                <h1 id="dash-overview">Farm Overview</h1>
+                <p><span id="dash-welcome">Welcome back</span>, {{ user.username }}</p>
             </header>
 
             <!-- Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
-                    <h3>Active Alerts</h3>
-                    <div class="value" style="color: #dc2626;">2 Critical</div>
-                    <div class="trend negative">Action Required</div>
+                    <h3 id="dash-alerts">Active Alerts</h3>
+                    <div class="value" style="color: #dc2626;">2 <span id="dash-critical">Critical</span></div>
+                    <div class="trend negative" id="dash-action">Action Required</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Soil Moisture</h3>
-                    <div class="value" style="color: var(--accent-color);">Optimal (65%)</div>
-                    <div class="trend positive">Sensor Online</div>
+                    <h3 id="dash-moisture">Soil Moisture</h3>
+                    <div class="value" style="color: var(--accent-color);"><span id="dash-optimal">Optimal</span> (65%)
+                    </div>
+                    <div class="trend positive" id="dash-online">Sensor Online</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Next Harvest</h3>
-                    <div class="value">14 Days</div>
+                    <h3 id="dash-harvest">Next Harvest</h3>
+                    <div class="value">14 <span id="dash-days">Days</span></div>
                     <div class="trend neutral">Wheat (Sector 4)</div>
                 </div>
                 <div class="stat-card">
-                    <h3>Device Status</h3>
-                    <div class="value">All Systems Go</div>
-                    <div class="trend positive">Battery 98%</div>
+                    <h3 id="dash-device">Device Status</h3>
+                    <div class="value" id="dash-go">All Systems Go</div>
+                    <div class="trend positive"><span id="dash-battery">Battery</span> 98%</div>
                 </div>
             </div>
 
@@ -68,7 +69,7 @@
                 <!-- Left Column: Charts -->
                 <div class="chart-section">
                     <div class="chart-card">
-                        <h3>Yield History (Last 5 Years)</h3>
+                        <h3 id="dash-yield">Yield History (Last 5 Years)</h3>
                         <canvas id="yieldChart"></canvas>
                     </div>
                     <div class="chart-card">
@@ -91,11 +92,11 @@
                         <div class="weather-temp" id="weather-temp">29°C</div>
                         <div class="weather-details-grid">
                             <div class="weather-detail-box">
-                                <span>Humidity</span>
+                                <span id="dash-humidity">Humidity</span>
                                 <strong id="weather-humidity">79%</strong>
                             </div>
                             <div class="weather-detail-box">
-                                <span>Wind</span>
+                                <span id="dash-wind">Wind</span>
                                 <strong id="weather-wind">12 km/h</strong>
                             </div>
                         </div>
@@ -119,6 +120,31 @@
                                 <div class="content">
                                     <h4>Irrigation Done</h4>
                                     <p>Sector 4 schedule complete.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Govt Expert Support Section -->
+                        <div class="expert-section glass-card"
+                            style="margin-top: var(--space-4); padding: var(--space-3);">
+                            <div class="expert-header"
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                                <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                    <i class="ph ph-phone-call"
+                                        style="font-size: 24px; color: var(--accent-yellow);"></i>
+                                    <h3 style="margin: 0;">Govt Expert Connect</h3>
+                                </div>
+                                <button onclick="fetchExperts()" class="btn-primary"
+                                    style="background: var(--accent-yellow); color: var(--text-900);">
+                                    <i class="ph ph-map-pin"></i> Find Officers
+                                </button>
+                            </div>
+                            <div id="expert-list" class="expert-grid"
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-3);">
+                                <!-- Expert Cards will be injected here -->
+                                <div class="placeholder-text"
+                                    style="grid-column: 1/-1; text-align: center; color: var(--text-400); padding: var(--space-4);">
+                                    Click "Find Officers" to locate nearest KVK/Agri Officers.
                                 </div>
                             </div>
                         </div>
@@ -214,7 +240,7 @@
             </div>
         </section>
 
-        <!-- MODULE: WEATHER -->
+        <!-- MODULE: WEATHER (Hidden/Removed from Nav) -->
         <section id="weather" class="module-section">
             <header class="module-header">
                 <h1>Weather Station</h1>
@@ -266,4 +292,72 @@
     </main>
 </div>
 <div id="toast-container"></div>
-{% endblock %}
+
+<!-- Model Loading Progress Bar -->
+<div id="model-loading-bar-container" class="hidden">
+    <div class="loading-text">Downloading AI Model (First Run Only)... <span id="loading-percent">0%</span></div>
+    // Skip local model check since we are using CDN
+    env.allowLocalModels = false;
+
+    class AI_Translator {
+    static instance = null;
+    static pipeline = null;
+    static modelName = 'Xenova/nllb-200-distilled-600M';
+
+    static async getInstance(progressCallback) {
+    if (this.pipeline) return this.pipeline;
+
+    if (!this.instance) {
+    this.instance = pipeline('translation', this.modelName, {
+    progress_callback: progressCallback
+    });
+    this.pipeline = await this.instance;
+    }
+    return this.pipeline;
+    }
+
+    static async translate(text, targetLang) {
+    // Map our codes to NLLB codes
+    const langMap = {
+    'hi': 'hin_Deva',
+    'kn': 'kan_Knda',
+    'en': 'eng_Latn'
+    };
+
+    const targetCode = langMap[targetLang];
+    if (!targetCode) return text; // Fallback
+
+    const translator = await this.getInstance((data) => {
+    // Update Progress Bar
+    if (data.status === 'progress') {
+    const percent = Math.round(data.progress * 100);
+    const barContainer = document.getElementById('model-loading-bar-container');
+    const fill = document.getElementById('model-progress-fill');
+    const text = document.getElementById('loading-percent');
+
+    if (barContainer) barContainer.classList.remove('hidden');
+    if (fill) fill.style.width = `${percent}%`;
+    if (text) text.textContent = `${percent}%`;
+
+    if (percent >= 100) {
+    setTimeout(() => {
+    if (barContainer) barContainer.classList.add('hidden');
+    }, 1000);
+    }
+    }
+    });
+
+    const output = await translator(text, {
+    src_lang: 'eng_Latn', // Assuming source is always English for now
+    tgt_lang: targetCode
+    });
+
+    return output[0].translation_text;
+    }
+    }
+
+    // Expose to global scope for script.js
+    window.AI_Translator = AI_Translator;
+    </script>
+
+    {% endblock %}

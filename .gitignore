@@ -10,3 +10,5 @@ venv/
 # Explicitly allow these (Hackathon Demo)
 !model.h5
 !assets/
+
+sample for mobilenetv2/

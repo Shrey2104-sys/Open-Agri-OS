@@ -7,11 +7,11 @@ import os
 
 # --- Configuration ---
 # Using the specific folder provided by the user
-DATASET_DIR = r"C:\Users\shrey\Documents\IWP\OpenAgriOS\sample for mobilenetv2"
+DATASET_DIR = r"C:\Users\shrey\Documents\IWP\sd\sample for mobilenetv2"
 IMG_SIZE = (224, 224)
 BATCH_SIZE = 32
 EPOCHS = 5
-MODEL_SAVE_PATH = r"C:\Users\shrey\Documents\IWP\OpenAgriOS\model.h5"
+MODEL_SAVE_PATH = r"C:\Users\shrey\Documents\IWP\sd\model.h5"
 
 def train_model():
     print(f"TensorFlow Version: {tf.__version__}")
@@ -60,9 +60,16 @@ def train_model():
     # 2. Build Model (Transfer Learning)
     print("\n--- Building MobileNetV2 Model ---")
     
+    # Preprocessing Layer (MobileNetV2 expects [-1, 1])
+    preprocess_input = tf.keras.applications.mobilenet_v2.preprocess_input
+
     # Load Base Model (Pre-trained on ImageNet)
+    # Note: We apply preprocessing via a Lambda layer or map, but here we can add it to the model
+    input_layer = tf.keras.layers.Input(shape=IMG_SIZE + (3,))
+    x = preprocess_input(input_layer)
+    
     base_model = MobileNetV2(
-        input_shape=IMG_SIZE + (3,),
+        input_tensor=x,
         include_top=False, 
         weights='imagenet'
     )
