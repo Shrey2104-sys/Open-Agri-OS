@@ -56,9 +56,11 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        print(f"DEBUG: Login attempt for user: {username}")
         
         # Mock Auth (Hardcoded as requested)
         if username == 'admin' and password == '1234':
+            print("DEBUG: Admin credentials match.")
             # Create a dummy user object or fetch a specific admin user
             # For simplicity in this Flask-Login setup, we need a real User object.
             # We'll check if admin exists, if not create it, or just use the first user.
@@ -71,15 +73,23 @@ def login():
             # If I just stick to DB, I might miss the "Mock" point.
             # But Flask-Login needs a user_id.
             # Let's try to find 'admin' in DB.
-            user = User.query.filter_by(username='admin').first()
-            if not user:
-                # Create admin if it doesn't exist (Auto-seeding for mock)
-                user = User(username='admin', password=generate_password_hash('1234', method='scrypt'))
-                db.session.add(user)
-                db.session.commit()
-            
-            login_user(user)
-            return redirect(url_for('dashboard'))
+            try:
+                user = User.query.filter_by(username='admin').first()
+                if not user:
+                    print("DEBUG: Creating admin user...")
+                    # Create admin if it doesn't exist (Auto-seeding for mock)
+                    user = User(username='admin', password=generate_password_hash('1234', method='scrypt'))
+                    db.session.add(user)
+                    db.session.commit()
+                
+                print("DEBUG: Logging in user...")
+                login_user(user)
+                print("DEBUG: Redirecting to dashboard...")
+                return redirect(url_for('dashboard'))
+            except Exception as e:
+                print(f"DEBUG: Login Error: {e}")
+                flash(f"Login Error: {e}", 'error')
+                return render_template('login.html')
 
         # Standard DB Auth
         user = User.query.filter_by(username=username).first()
@@ -88,6 +98,7 @@ def login():
             login_user(user)
             return redirect(url_for('dashboard'))
         else:
+            print("DEBUG: Invalid credentials.")
             flash('Invalid username or password.', 'error')
     return render_template('login.html')
 
@@ -147,9 +158,15 @@ def predict_disease():
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
         
-        # Call Vision Engine
-        result = ai_engine.predict_disease(filepath)
-        return jsonify(result)
+        # Call Vision Engine (Local Model)
+        try:
+            from backend import ai_vision
+            result = ai_vision.analyze_image(filepath)
+            return jsonify(result)
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+            return jsonify({'error': str(e)}), 500
 
 @app.route('/api/advice', methods=['POST'])
 @login_required

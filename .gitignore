@@ -1,14 +1,14 @@
-# Python
 __pycache__/
 *.pyc
-venv/
+instance/
 .env
-
-# OS
-.DS_Store
-
-# Explicitly allow these (Hackathon Demo)
-!model.h5
-!assets/
-
-sample for mobilenetv2/
+venv/
+*.h5
+*.keras
+*.db
+static/uploads/
+debug_log.txt
+debug_model.py
+test_login.py
+test_api.py
+reset_db.py

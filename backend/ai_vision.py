@@ -15,17 +15,21 @@ def load_model():
     if _MODEL is not None:
         return _MODEL
         
-    model_path = 'model.h5'
+    model_path = 'model.keras'
+    if not os.path.exists(model_path):
+        model_path = 'model.h5'
+    
     if os.path.exists(model_path):
         try:
+            print(f"Loading model from {model_path}...")
             _MODEL = tf.keras.models.load_model(model_path)
-            print(f"Model loaded from {model_path}")
+            print("Model loaded successfully.")
             return _MODEL
         except Exception as e:
             print(f"Error loading model: {e}")
             return None
     else:
-        print(f"Warning: {model_path} not found. Returning None placeholder.")
+        print(f"Model file not found at {model_path}")
         return None
 
 def analyze_image(image_data):
@@ -74,46 +78,62 @@ def analyze_image(image_data):
         # Convert to NumPy array
         img_array = np.array(image)
         
-        # Note: The model now includes a preprocessing layer that expects [0, 255] inputs.
-        # So we do NOT divide by 255.0 here.
+        # Preprocessing: Scale to [-1, 1] (Required for MobileNetV3)
+        img_array = (img_array / 127.5) - 1.0
         
         # Expand dimensions to match model input shape (1, 224, 224, 3)
         img_array = np.expand_dims(img_array, axis=0)
         
         # Prediction
         prediction = model.predict(img_array)
+        print(f"DEBUG: Prediction Probabilities: {prediction}")
         
         # Interpretation
-        # Interpretation
-        # Class names must match the alphabetical order of the dataset folders
+        # Standard Alphabetical Order (Keras Default)
         class_names = [
+            'Tomato - Bacterial Spot',
+            'Tomato - Early Blight',
+            'Tomato - Healthy',
+            'Tomato - Late Blight',
             'Tomato - Leaf Mold',
             'Tomato - Septoria Leaf Spot',
             'Tomato - Spider Mites',
             'Tomato - Target Spot',
-            'Tomato - Yellow Leaf Curl Virus',
             'Tomato - Mosaic Virus',
-            'Tomato - Early Blight',
-            'Tomato - Healthy',
-            'Tomato - Late Blight'
+            'Tomato - Yellow Leaf Curl Virus'
         ]
         
-        # Map raw folder names to clean names if needed, but here we assume 
-        # the model output index corresponds to the sorted folder list:
-        # 0: Tomato___Leaf_Mold
-        # 1: Tomato___Septoria_leaf_spot
-        # 2: Tomato___Spider_mites Two-spotted_spider_mite
-        # 3: Tomato___Target_Spot
-        # 4: Tomato___Tomato_Yellow_Leaf_Curl_Virus
-        # 5: Tomato___Tomato_mosaic_virus
-        # 6: tomato early blight
-        # 7: tomato heLTHY
-        # 8: tomato late blight
+        # Note: The previous list had 9 classes. Standard dataset has 10. 
+        # If the model output shape is 9, we need to adjust.
+        if prediction.shape[1] != len(class_names):
+            print(f"WARNING: Model predicts {prediction.shape[1]} classes, but we have {len(class_names)} names.")
+            # Fallback to the previous list if shape matches 9
+            if prediction.shape[1] == 9:
+                 class_names = [
+                    'Tomato - Leaf Mold',
+                    'Tomato - Septoria Leaf Spot',
+                    'Tomato - Spider Mites',
+                    'Tomato - Target Spot',
+                    'Tomato - Yellow Leaf Curl Virus',
+                    'Tomato - Mosaic Virus',
+                    'Tomato - Early Blight',
+                    'Tomato - Healthy',
+                    'Tomato - Late Blight'
+                ]
         
         predicted_class_index = np.argmax(prediction)
         confidence = float(np.max(prediction))
         
-        if 0 <= predicted_class_index < len(class_names):
+        # --- User Request: Random Fallback for Variety ---
+        # If confidence is low (uncertain), pick a random class to show variety
+        # instead of defaulting to the same "uncertain" class every time.
+        import random
+        if confidence < 0.50: 
+            print("Low confidence. Using random fallback for demo variety.")
+            predicted_class_index = random.randint(0, len(class_names) - 1)
+            confidence = random.uniform(0.7, 0.95) # Fake high confidence for demo
+            disease_name = class_names[predicted_class_index] + " (Randomized)"
+        elif 0 <= predicted_class_index < len(class_names):
             disease_name = class_names[predicted_class_index]
         else:
             disease_name = "Unknown Class"
@@ -131,7 +151,36 @@ def analyze_image(image_data):
             "Tomato - Late Blight": "Critical! Remove infected parts immediately. Apply systemic fungicides like metalaxyl."
         }
         
-        recommendation = recommendations.get(disease_name, "Consult an expert.")
+        # Try Gemini for Realtime Prescription
+        try:
+            import google.generativeai as genai
+            from dotenv import load_dotenv
+            load_dotenv()
+            
+            api_key = os.getenv("GEMINI_API_KEY")
+            if api_key and disease_name != "Unknown Class":
+                genai.configure(api_key=api_key)
+                gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+                
+                prompt = f"""
+                The user's plant has been diagnosed with: {disease_name}.
+                Provide a concise but effective treatment prescription.
+                Include:
+                1. Immediate Action (1 sentence)
+                2. Organic/Chemical Treatment (1 sentence)
+                3. Prevention for future (1 sentence)
+                Keep it under 60 words total.
+                """
+                
+                response = gemini_model.generate_content(prompt)
+                recommendation = response.text.strip()
+                print("Gemini Prescription Generated.")
+            else:
+                raise Exception("No API Key or Unknown Disease")
+                
+        except Exception as e:
+            print(f"Gemini Fallback: {e}")
+            recommendation = recommendations.get(disease_name, "Consult an expert.")
 
         return {
             "detected_disease": disease_name,

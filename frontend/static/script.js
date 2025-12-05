@@ -223,13 +223,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     const contentDiv = document.getElementById('crop-advice-content');
                     resultsDiv.classList.remove('hidden');
 
+                    // Task 1: Robust Fallback Mechanism
+                    const DEFAULT_CROP_DATA = {
+                        crop: 'Maize (Hybrid)',
+                        season: 'Rabi 2025',
+                        soil: 'Red Loamy',
+                        water: 'Moderate (Irrigate every 4 days)',
+                        reason: 'Data unavailable. Showing regional default.'
+                    };
+
+                    const rec = data.recommendation || DEFAULT_CROP_DATA;
+
                     contentDiv.innerHTML = `
                         <div class="advice-card">
-                            <h4>Recommended Crop: ${data.recommendation.crop}</h4>
-                            <p><strong>Season:</strong> ${data.recommendation.season}</p>
-                            <p><strong>Soil Type:</strong> ${data.recommendation.soil}</p>
-                            <p><strong>Water:</strong> ${data.recommendation.water}</p>
-                            <p class="reason">"${data.recommendation.reason}"</p>
+                            <h4>Recommended Crop: ${rec.crop || DEFAULT_CROP_DATA.crop}</h4>
+                            <p><strong>Season:</strong> ${rec.season || DEFAULT_CROP_DATA.season}</p>
+                            <p><strong>Soil Type:</strong> ${rec.soil || DEFAULT_CROP_DATA.soil}</p>
+                            <p><strong>Water:</strong> ${rec.water || DEFAULT_CROP_DATA.water}</p>
+                            <p class="reason">"${rec.reason || DEFAULT_CROP_DATA.reason}"</p>
                         </div>
                     `;
                     showToast("Analysis Complete", "success");
@@ -287,6 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Agri-Doctor (Upload) ---
+    // --- Agri-Doctor (Upload) ---
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
 
@@ -319,7 +331,13 @@ document.addEventListener('DOMContentLoaded', () => {
             formData.append('file', file);
 
             try {
+                // Use relative path - works perfectly when on localhost:5000
                 const response = await fetch('/api/predict_disease', { method: 'POST', body: formData });
+
+                if (!response.ok) {
+                    throw new Error(`Server Error: ${response.status} ${response.statusText}`);
+                }
+
                 const data = await response.json();
 
                 document.getElementById('diagnosis-result').classList.remove('hidden');
@@ -335,6 +353,24 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     statusBox.className = "status-box status-disease";
                     statusBox.innerHTML = `<h2>⚠️ ${data.detected_disease}</h2><p>Pathogen Detected</p>`;
+
+                    // Task 2: Emergency Agri-Office Contact
+                    const contactCard = `
+                        <div class="emergency-contact-card" style="margin-top: 15px; background: rgba(220, 38, 38, 0.1); border: 1px solid #dc2626; padding: 15px; border-radius: 8px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <h4 style="color: #dc2626; margin: 0; font-size: 1rem;">Raitha Samparka Kendra (RSK) - Davanagere</h4>
+                                    <p style="color: #cbd5e1; margin: 5px 0 0 0; font-size: 0.85rem;">Report this outbreak to your local officer.</p>
+                                    <p style="color: #fff; font-weight: bold; margin-top: 5px;">📞 1800-425-3553</p>
+                                </div>
+                                <button onclick="window.open('tel:18004253553')" style="background: #16a34a; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                                    📞 Call Agri-Officer
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    statusBox.innerHTML += contactCard;
+
                     const treatBtn = document.getElementById('treatment-btn');
                     treatBtn.classList.remove('hidden');
                     treatBtn.onclick = () => getTreatment(data.detected_disease);
@@ -349,9 +385,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             } catch (e) {
                 console.error(e);
-                showToast("Error analyzing image", "error");
                 dropZone.classList.remove('scanning');
-                dropZone.innerHTML = `<p style="color:red">Error. Try again.</p>`;
+                // Show the ACTUAL error message to the user
+                dropZone.innerHTML = `<p style="color:red">Error: ${e.message}.<br>Try refreshing (Ctrl+F5).</p>`;
             }
         });
     }
@@ -359,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
     async function getTreatment(disease) {
         showAIOverlay("Consulting AI Agronomist...", "Generating Organic Treatment Plan...", async () => {
             try {
-                const response = await fetch('/api/get_advice', {
+                const response = await fetch('http://127.0.0.1:5000/api/get_advice', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ disease: disease, ndvi: "Critical" })
@@ -560,11 +596,14 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     window.openLanguageModal = function () {
-        document.getElementById('language-modal').classList.remove('hidden');
+        // In index.html, the ID is 'language-gate' for the overlay
+        const gate = document.getElementById('language-gate');
+        if (gate) gate.classList.remove('hidden');
     };
 
     window.closeLanguageModal = function () {
-        document.getElementById('language-modal').classList.add('hidden');
+        const gate = document.getElementById('language-gate');
+        if (gate) gate.classList.add('hidden');
     };
 
     window.setLanguage = function (lang) {

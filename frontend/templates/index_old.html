@@ -1,0 +1,358 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>🌿 Open-Agri</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-target="dashboard">
+                <span class="icon">🏠</span> <span class="link-text">Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-target="scout">
+                <span class="icon">🛰️</span> <span class="link-text">Agri-Scout</span>
+            </a>
+            <a href="#" class="nav-item" data-target="doctor">
+                <span class="icon">🔬</span> <span class="link-text">Agri-Doctor</span>
+            </a>
+            <a href="#" class="nav-item" onclick="openLanguageModal()">
+                <span class="icon">🗣️</span> <span class="link-text">Language / भाषा</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <p>👤 {{ user.username }}</p>
+                <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+        <!-- MODULE: DASHBOARD -->
+        <section id="dashboard" class="module-section active">
+            <header class="module-header">
+                <h1 id="dash-overview">Farm Overview</h1>
+                <p><span id="dash-welcome">Welcome back</span>, {{ user.username }}</p>
+            </header>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="dash-alerts">Active Alerts</h3>
+                    <div class="value" style="color: #dc2626;">2 <span id="dash-critical">Critical</span></div>
+                    <div class="trend negative" id="dash-action">Action Required</div>
+                </div>
+                <div class="stat-card">
+                    <h3 id="dash-moisture">Soil Moisture</h3>
+                    <div class="value" style="color: var(--accent-color);"><span id="dash-optimal">Optimal</span> (65%)
+                    </div>
+                    <div class="trend positive" id="dash-online">Sensor Online</div>
+                </div>
+                <div class="stat-card">
+                    <h3 id="dash-harvest">Next Harvest</h3>
+                    <div class="value">14 <span id="dash-days">Days</span></div>
+                    <div class="trend neutral">Wheat (Sector 4)</div>
+                </div>
+                <div class="stat-card">
+                    <h3 id="dash-device">Device Status</h3>
+                    <div class="value" id="dash-go">All Systems Go</div>
+                    <div class="trend positive"><span id="dash-battery">Battery</span> 98%</div>
+                </div>
+            </div>
+
+            <!-- Main Layout Grid -->
+            <div class="dashboard-grid">
+                <!-- Left Column: Charts -->
+                <div class="chart-section">
+                    <div class="chart-card">
+                        <h3 id="dash-yield">Yield History (Last 5 Years)</h3>
+                        <canvas id="yieldChart"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <h3>Market Price Trends</h3>
+                        <canvas id="marketChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Right Column: Weather & Insights -->
+                <div class="side-panel">
+                    <!-- Blue Weather Card -->
+                    <div class="weather-card">
+                        <div class="weather-header">
+                            <div class="weather-location">
+                                <h2 id="weather-location">Davanagere</h2>
+                                <span id="weather-condition">Sunny</span>
+                            </div>
+                            <div class="weather-icon-small">☀️</div>
+                        </div>
+                        <div class="weather-temp" id="weather-temp">29°C</div>
+                        <div class="weather-details-grid">
+                            <div class="weather-detail-box">
+                                <span id="dash-humidity">Humidity</span>
+                                <strong id="weather-humidity">79%</strong>
+                            </div>
+                            <div class="weather-detail-box">
+                                <span id="dash-wind">Wind</span>
+                                <strong id="weather-wind">12 km/h</strong>
+                            </div>
+                        </div>
+                        <div class="insight-box">
+                            <h3>Today's Insight</h3>
+                            <p>Optimal planting conditions detected. Soil moisture is ideal for wheat sowing.</p>
+                        </div>
+
+                        <!-- Alerts List -->
+                        <div class="alerts-container">
+                            <h3>📢 Recent Alerts</h3>
+                            <div class="alert-card warning">
+                                <span class="icon">⚠️</span>
+                                <div class="content">
+                                    <h4>Pest Alert</h4>
+                                    <p>Fall Armyworm detected.</p>
+                                </div>
+                            </div>
+                            <div class="alert-card success">
+                                <span class="icon">✅</span>
+                                <div class="content">
+                                    <h4>Irrigation Done</h4>
+                                    <p>Sector 4 schedule complete.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Govt Expert Support Section -->
+                        <div class="expert-section glass-card"
+                            style="margin-top: var(--space-4); padding: var(--space-3);">
+                            <div class="expert-header"
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-3);">
+                                <div style="display: flex; align-items: center; gap: var(--space-2);">
+                                    <i class="ph ph-phone-call"
+                                        style="font-size: 24px; color: var(--accent-yellow);"></i>
+                                    <h3 style="margin: 0;">Govt Expert Connect</h3>
+                                </div>
+                                <button onclick="fetchExperts()" class="btn-primary"
+                                    style="background: var(--accent-yellow); color: var(--text-900);">
+                                    <i class="ph ph-map-pin"></i> Find Officers
+                                </button>
+                            </div>
+                            <div id="expert-list" class="expert-grid"
+                                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: var(--space-3);">
+                                <!-- Expert Cards will be injected here -->
+                                <div class="placeholder-text"
+                                    style="grid-column: 1/-1; text-align: center; color: var(--text-400); padding: var(--space-4);">
+                                    Click "Find Officers" to locate nearest KVK/Agri Officers.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MODULE: SCOUT -->
+        <section id="scout" class="module-section">
+            <header class="module-header">
+                <h1>Agri-Scout</h1>
+                <p>Land Intelligence & Crop Suitability</p>
+            </header>
+
+            <div class="scout-grid">
+                <!-- Left Sidebar: Controls & Results -->
+                <div class="scout-sidebar">
+                    <div class="control-card">
+                        <h3>📍 Location Search</h3>
+                        <div class="search-box">
+                            <!-- Map Controls (Overlay) -->
+                            <div class="map-layer-controls">
+                                <label><input type="radio" name="layer" value="satellite" checked> Satellite</label>
+                                <label><input type="radio" name="layer" value="ndvi"> NDVI (Health)</label>
+                            </div>
+                        </div>
+                    </div>
+        </section>
+
+        <!-- MODULE: DOCTOR -->
+        <section id="doctor" class="module-section">
+            <header class="module-header">
+                <h1>Agri-Doctor</h1>
+                <p>AI Plant Pathology Lab</p>
+            </header>
+
+            <div class="doctor-layout">
+                <div class="upload-zone glass-card" id="drop-zone">
+                    <div class="upload-content">
+                        <span class="icon-large">📸</span>
+                        <h3>Upload Specimen</h3>
+                        <p>Drag & drop or click to upload leaf image</p>
+                        <input type="file" id="file-input" accept="image/*" hidden>
+                    </div>
+                </div>
+
+                <div id="diagnosis-result" class="diagnosis-card glass-card hidden">
+                    <h3>📋 Diagnosis Report</h3>
+                    <div class="confidence-meter">
+                        <div class="label">Confidence</div>
+                        <div class="bar-bg">
+                            <div class="bar-fill" id="confidence-bar"></div>
+                        </div>
+                        <div class="value" id="confidence-text">0%</div>
+                    </div>
+
+                    <div id="disease-status" class="status-box"></div>
+
+                    <button id="treatment-btn" class="btn-primary hidden">💊 Generate AI Treatment Plan</button>
+                </div>
+            </div>
+
+            <!-- Treatment Modal -->
+            <div id="treatment-modal" class="modal hidden">
+                <div class="modal-content glass-card">
+                    <span class="close-modal">&times;</span>
+                    <h2>🩺 AI Agronomist Prescription</h2>
+                    <div id="treatment-plan-content"></div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary"
+                            onclick="document.getElementById('treatment-modal').classList.add('hidden')">Close</button>
+                        <button class="btn-primary" onclick="window.print()">🖨️ Print Prescription</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- MODULE: WEATHER (Hidden/Removed from Nav) -->
+        <section id="weather" class="module-section">
+            <header class="module-header">
+                <h1>Weather Station</h1>
+                <p>Detailed Analytics Coming Soon</p>
+            </header>
+            <div class="weather-dashboard">
+                <div class="weather-main glass-card">
+                    <div class="weather-icon">⛅</div>
+                    <div class="weather-info">
+                        <h2 id="w-temp">28°C</h2>
+                        <p id="w-condition">Partly Cloudy</p>
+                    </div>
+                </div>
+                <div class="weather-details glass-card">
+                    <div class="weather-details-grid">
+                        <div class="detail-item">
+                            <span>💧 Humidity</span>
+                            <span id="w-humidity">65%</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>🌬️ Wind</span>
+                            <span id="w-wind">12 km/h</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>🌱 Forecast</span>
+                            <span id="w-forecast" style="color: var(--accent-color);">Good for spraying</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>🌡️ Pressure</span>
+                            <span id="weather-pressure">-- hPa</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>☀️ UV Index</span>
+                            <span id="weather-uv">--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>🌅 Sunrise</span>
+                            <span id="weather-sunrise">--:--</span>
+                        </div>
+                        <div class="detail-item">
+                            <span>🌇 Sunset</span>
+                            <span id="weather-sunset">--:--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+<!-- Language Gate Modal (Visible by default) -->
+<div id="language-gate" class="language-modal-overlay">
+    <div class="language-modal-content">
+        <h2>Select Language / भाषा चुनें / ಭಾಷೆಯನ್ನು ಆರಿಸಿ</h2>
+        <div class="language-options">
+            <button onclick="setLanguage('en')" class="lang-btn">English</button>
+            <button onclick="setLanguage('hi')" class="lang-btn">हिंदी (Hindi)</button>
+            <button onclick="setLanguage('kn')" class="lang-btn">ಕನ್ನಡ (Kannada)</button>
+        </div>
+    </div>
+</div>
+
+<div id="toast-container"></div>
+
+<!-- Model Loading Progress Bar -->
+<div id="model-loading-bar-container" class="hidden">
+    <div class="loading-text">Downloading AI Model (First Run Only)... <span id="loading-percent">0%</span></div>
+    // Skip local model check since we are using CDN
+    env.allowLocalModels = false;
+
+    class AI_Translator {
+    static instance = null;
+    static pipeline = null;
+    static modelName = 'Xenova/nllb-200-distilled-600M';
+
+    static async getInstance(progressCallback) {
+    if (this.pipeline) return this.pipeline;
+
+    if (!this.instance) {
+    this.instance = pipeline('translation', this.modelName, {
+    progress_callback: progressCallback
+    });
+    this.pipeline = await this.instance;
+    }
+    return this.pipeline;
+    }
+
+    static async translate(text, targetLang) {
+    // Map our codes to NLLB codes
+    const langMap = {
+    'hi': 'hin_Deva',
+    'kn': 'kan_Knda',
+    'en': 'eng_Latn'
+    };
+
+    const targetCode = langMap[targetLang];
+    if (!targetCode) return text; // Fallback
+
+    const translator = await this.getInstance((data) => {
+    // Update Progress Bar
+    if (data.status === 'progress') {
+    const percent = Math.round(data.progress * 100);
+    const barContainer = document.getElementById('model-loading-bar-container');
+    const fill = document.getElementById('model-progress-fill');
+    const text = document.getElementById('loading-percent');
+
+    if (barContainer) barContainer.classList.remove('hidden');
+    if (fill) fill.style.width = `${percent}%`;
+    if (text) text.textContent = `${percent}%`;
+
+    if (percent >= 100) {
+    setTimeout(() => {
+    if (barContainer) barContainer.classList.add('hidden');
+    }, 1000);
+    }
+    }
+    });
+
+    const output = await translator(text, {
+    src_lang: 'eng_Latn', // Assuming source is always English for now
+    tgt_lang: targetCode
+    });
+
+    return output[0].translation_text;
+    }
+    }
+
+    // Expose to global scope for script.js
+    window.AI_Translator = AI_Translator;
+    </script>
+
+    {% endblock %}
